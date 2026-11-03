@@ -3,10 +3,14 @@ import { Pool } from "pg";
 const globalForDatabase = globalThis as typeof globalThis & { midsproutPool?: Pool };
 
 function createPool() {
-  const connectionString = process.env.MIDSPROUTDATA_URL ?? process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("Missing MIDSPROUTDATA_URL database connection string.");
+  const connectionString = process.env.MIDSPROUTDATA_POSTGRES_URL
+    ?? process.env.MIDSPROUTDATA_POSTGRES_PRISMA_URL
+    ?? process.env.MIDSPROUTDATA_URL
+    ?? process.env.POSTGRES_URL
+    ?? process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("Missing Supabase PostgreSQL connection string.");
   if (!/^postgres(ql)?:\/\//i.test(connectionString)) {
-    throw new Error("MIDSPROUTDATA_URL must be a PostgreSQL connection URL from Supabase.");
+    throw new Error("The Supabase database environment variable must contain a PostgreSQL connection URL.");
   }
   return new Pool({ connectionString, max: 4, idleTimeoutMillis: 10_000, connectionTimeoutMillis: 10_000 });
 }

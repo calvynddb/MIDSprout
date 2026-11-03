@@ -1,6 +1,6 @@
 # MIDSprout shared database
 
-MIDSprout uses the server-only `MIDSPROUTDATA_URL` environment variable as a PostgreSQL connection string. In Supabase, copy the PostgreSQL connection string from **Connect** (use the Transaction pooler for Vercel/serverless) and set that value for `MIDSPROUTDATA_URL` in the Vercel project's Production and Preview environments. Do not add a `NEXT_PUBLIC_` prefix or commit the URL.
+MIDSprout uses the server-only `MIDSPROUTDATA_POSTGRES_URL` environment variable supplied by the Vercel Supabase integration. The app also recognizes `MIDSPROUTDATA_POSTGRES_PRISMA_URL`, `MIDSPROUTDATA_URL`, `POSTGRES_URL`, and `DATABASE_URL` as fallbacks. Use the Transaction pooler for Vercel/serverless. Do not add a `NEXT_PUBLIC_` prefix or commit the connection URL.
 
 For local development, link the repository to the same Vercel project and pull its environment variables into `.env.development.local`:
 

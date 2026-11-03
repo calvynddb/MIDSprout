@@ -79,8 +79,8 @@ export async function GET() {
     return NextResponse.json(await readSnapshot(), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("MIDSprout database read failed:", error);
-    const message = error instanceof Error && error.message.startsWith("Missing MIDSPROUTDATA_URL")
-      ? "Set MIDSPROUTDATA_URL to the Supabase PostgreSQL connection string in Vercel and local development."
+    const message = error instanceof Error && error.message.startsWith("Missing Supabase PostgreSQL")
+      ? "Set MIDSPROUTDATA_POSTGRES_URL in Vercel to the Supabase PostgreSQL connection string."
       : "Could not connect to the MIDSprout database. Check the server environment variable and Supabase connection settings.";
     return NextResponse.json({ error: message }, { status: 503 });
   }
