@@ -12,7 +12,26 @@ function createPool() {
   if (!/^postgres(ql)?:\/\//i.test(connectionString)) {
     throw new Error("The Supabase database environment variable must contain a PostgreSQL connection URL.");
   }
-  return new Pool({ connectionString, max: 4, idleTimeoutMillis: 10_000, connectionTimeoutMillis: 10_000 });
+  return new Pool({
+    connectionString: withoutSslParams(connectionString),
+    // Supabase's pooler uses a certificate chain Node does not trust by default; keep TLS encryption on without CA verification.
+    ssl: isLocalHost(connectionString) ? undefined : { rejectUnauthorized: false },
+    max: 4,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+  });
+}
+
+// pg treats `sslmode=require` in the URL as full verification and it overrides the `ssl` option, so strip it.
+function withoutSslParams(connectionString: string) {
+  const url = new URL(connectionString);
+  ["sslmode", "sslrootcert", "sslcert", "sslkey", "uselibpqcompat"].forEach((param) => url.searchParams.delete(param));
+  return url.toString();
+}
+
+function isLocalHost(connectionString: string) {
+  const { hostname } = new URL(connectionString);
+  return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
 export function getDatabasePool() {
