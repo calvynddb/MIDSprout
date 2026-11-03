@@ -1,0 +1,30 @@
+[
+  {
+    "id": "event-midsaccelerate",
+    "name": "MIDSAccelerate",
+    "collaborationType": "Joint partnership",
+    "committees": [],
+    "startDate": "",
+    "endDate": "",
+    "startTime": "",
+    "endTime": "",
+    "location": "",
+    "description": "",
+    "status": "planning",
+    "participants": []
+  },
+  {
+    "id": "event-bisig",
+    "name": "BISIG",
+    "collaborationType": "Media partnership",
+    "committees": [],
+    "startDate": "",
+    "endDate": "",
+    "startTime": "",
+    "endTime": "",
+    "location": "",
+    "description": "",
+    "status": "planning",
+    "participants": []
+  }
+]
