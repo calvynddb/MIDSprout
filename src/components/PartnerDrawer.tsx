@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ImagePlus, Save, X } from "lucide-react";
+import { ImagePlus, Save, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FieldLabel, Input } from "@/components/ui/input";
 import { PartnerLogo } from "@/components/PartnerLogo";
@@ -56,6 +56,7 @@ export function PartnerDrawer() {
 function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCategory }: { selected: Partnership | null; selectedPartnerId: string | null; drawerMode: "edit" | "create"; initialCategory: PartnerCategory | null }) {
   const closeDrawer = useCanvasStore((s) => s.closeDrawer);
   const upsertPartner = usePartnerStore((s) => s.upsertPartner);
+  const deletePartner = usePartnerStore((s) => s.deletePartner);
   const events = useEventStore((s) => s.events);
   const reduceMotion = useReducedMotion();
   const history = useMemo(() => events.flatMap((event) => {
@@ -63,6 +64,9 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
     return participation ? [event] : [];
   }), [events, selectedPartnerId]);
   const [form, setForm] = useState<Partnership>(() => drawerMode === "create" ? emptyPartner(initialCategory ?? undefined) : normalizePartner(selected));
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const patch = <K extends keyof Partnership>(key: K, value: Partnership[K]) => setForm((current) => ({ ...current, [key]: value }));
   const uploadLogo = async (file?: File) => {
@@ -96,6 +100,15 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
     upsertPartner(partner);
     closeDrawer();
   };
+  const removePartner = async () => {
+    if (!selectedPartnerId || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    const deleted = await deletePartner(selectedPartnerId);
+    setDeleting(false);
+    if (deleted) closeDrawer();
+    else setDeleteError("Could not delete this organization. Check your database connection and try again.");
+  };
 
   return <>
       <motion.button type="button" aria-label="Close profile" className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeDrawer} />
@@ -121,7 +134,17 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
             {history.length ? <ul className="divide-y divide-sky-100">{history.map((collaboration) => <li key={collaboration.id} className="py-3"><p className="font-semibold text-slate-800">{collaboration.name}</p><p className="mt-1 text-sm text-slate-500">{collaboration.collaborationType} · {collaboration.status} · {collaboration.startDate || "Date TBD"}{collaboration.endDate && collaboration.endDate !== collaboration.startDate ? ` – ${collaboration.endDate}` : ""}{collaboration.startTime ? ` · ${collaboration.startTime}${collaboration.endTime ? `–${collaboration.endTime}` : ""}` : ""}</p><p title="Committees concerned with this collaboration" className="mt-1 text-sm text-slate-600">{collaboration.committees.length ? collaboration.committees.join(" · ") : "No committees set"}</p></li>)}</ul> : <p className="py-3 text-sm text-slate-400">No collaboration history yet.</p>}
           </section>}
         </div>
-        <footer className="flex items-center justify-end gap-3 border-t border-sky-200 px-6 py-4"><LeafButton onClick={save}><Save size={16} /> Save profile</LeafButton></footer>
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
+          {drawerMode === "edit" && <div className="flex flex-wrap items-center gap-2">
+            {!confirmDelete ? <LeafButton variant="outline" className="border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50" onClick={() => { setConfirmDelete(true); setDeleteError(""); }}><Trash2 size={16} /> Delete organization</LeafButton> : <div className="flex flex-wrap items-center gap-2" role="alert">
+              <span className="mr-1 text-sm font-medium text-rose-800">Permanently delete this organization and unlink it from collaborations?</span>
+              <LeafButton variant="ghost" className="px-3 py-2 text-slate-600" disabled={deleting} onClick={() => { setConfirmDelete(false); setDeleteError(""); }}>Cancel</LeafButton>
+              <LeafButton className="bg-rose-600 px-3 py-2 text-white hover:bg-rose-700" disabled={deleting} onClick={() => void removePartner()}>{deleting ? "Deleting…" : "Delete permanently"}</LeafButton>
+            </div>}
+            {deleteError && <span role="status" className="text-sm text-rose-700">{deleteError}</span>}
+          </div>}
+          <LeafButton onClick={save}><Save size={16} /> Save profile</LeafButton>
+        </footer>
       </motion.aside>
   </>;
 }

@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import seed from "@/data/events.json";
 import type { PartnershipEvent } from "@/types/partnership";
-import { sendDatabaseMutation } from "@/lib/sync-client";
+import { deleteDatabaseRecord, sendDatabaseMutation } from "@/lib/sync-client";
 
 interface EventState {
   events: PartnershipEvent[];
@@ -17,6 +17,7 @@ interface EventState {
   closeEvent: () => void;
   upsertEvent: (event: PartnershipEvent) => void;
   replaceRemoteData: (events: PartnershipEvent[], collaborationTypes: string[], committeeOptions: string[]) => void;
+  deleteEvent: (id: string) => Promise<boolean>;
   addCollaborationType: (value: string) => void;
   addCommitteeOption: (value: string) => void;
 }
@@ -78,6 +79,11 @@ export const useEventStore = create<EventState>()(persist((set) => ({
     collaborationTypes: [...new Set([...DEFAULT_COLLABORATION_TYPES, ...collaborationTypes, ...events.map((event) => event.collaborationType)])],
     committeeOptions: [...new Set([...DEFAULT_COMMITTEES, ...committeeOptions, ...events.flatMap((event) => event.committees)])],
   }),
+  deleteEvent: async (id) => {
+    const deleted = await deleteDatabaseRecord("collaboration", id);
+    if (deleted) set((state) => ({ events: state.events.filter((event) => event.id !== id) }));
+    return deleted;
+  },
   addCollaborationType: (value) => {
     const before = useEventStore.getState().collaborationTypes;
     set((state) => ({ collaborationTypes: addUniqueOption(state.collaborationTypes, value) }));

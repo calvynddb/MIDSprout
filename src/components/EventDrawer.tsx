@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CalendarDays, Save, Search, X } from "lucide-react";
+import { CalendarDays, Save, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FieldLabel, Input } from "@/components/ui/input";
 import { LeafButton } from "@/components/ui/leaf-button";
@@ -28,6 +28,7 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
   const reduceMotion = useReducedMotion();
   const close = useEventStore((s) => s.closeEvent);
   const upsertEvent = useEventStore((s) => s.upsertEvent);
+  const deleteEvent = useEventStore((s) => s.deleteEvent);
   const collaborationTypes = useEventStore((s) => s.collaborationTypes);
   const committeeOptions = useEventStore((s) => s.committeeOptions);
   const addCollaborationType = useEventStore((s) => s.addCollaborationType);
@@ -43,6 +44,9 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
   const [newType, setNewType] = useState("");
   const [addingCommittee, setAddingCommittee] = useState(false);
   const [newCommittee, setNewCommittee] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const visiblePartners = useMemo(() => partners.filter((partner) =>
     (categoryFilter === "All branches" || partner.category === categoryFilter) &&
@@ -95,6 +99,15 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
     upsertEvent(collaboration);
     close();
   };
+  const removeCollaboration = async () => {
+    if (!selected?.id || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    const deleted = await deleteEvent(selected.id);
+    setDeleting(false);
+    if (deleted) close();
+    else setDeleteError("Could not delete this collaboration. Check your database connection and try again.");
+  };
 
   return <>
     <motion.button type="button" aria-label="Close collaboration" className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
@@ -128,7 +141,17 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
         </section>
       </div>
 
-      <footer className="flex items-center justify-end gap-3 border-t border-sky-200 px-6 py-4"><LeafButton onClick={save}><Save size={16} /> Save collaboration</LeafButton></footer>
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
+        {selected && <div className="flex flex-wrap items-center gap-2">
+          {!confirmDelete ? <LeafButton variant="outline" className="border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50" onClick={() => { setConfirmDelete(true); setDeleteError(""); }}><Trash2 size={16} /> Delete collaboration</LeafButton> : <div className="flex flex-wrap items-center gap-2" role="alert">
+            <span className="mr-1 text-sm font-medium text-rose-800">Permanently delete this collaboration and its organization links?</span>
+            <LeafButton variant="ghost" className="px-3 py-2 text-slate-600" disabled={deleting} onClick={() => { setConfirmDelete(false); setDeleteError(""); }}>Cancel</LeafButton>
+            <LeafButton className="bg-rose-600 px-3 py-2 text-white hover:bg-rose-700" disabled={deleting} onClick={() => void removeCollaboration()}>{deleting ? "Deleting…" : "Delete permanently"}</LeafButton>
+          </div>}
+          {deleteError && <span role="status" className="text-sm text-rose-700">{deleteError}</span>}
+        </div>}
+        <LeafButton onClick={save}><Save size={16} /> Save collaboration</LeafButton>
+      </footer>
     </motion.aside>
   </>;
 }

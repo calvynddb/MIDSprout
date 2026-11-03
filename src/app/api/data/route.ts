@@ -109,7 +109,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureDatabaseSchema();
-    const body = await request.json() as { action?: string; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
+    const body = await request.json() as { action?: string; id?: string; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
     if (body.action === "bootstrap" && body.snapshot) {
       const pool = getDatabasePool();
       const client = await pool.connect();
@@ -138,7 +138,13 @@ export async function POST(request: Request) {
     }
     if (body.action === "upsert-organization" && body.partner?.id) await savePartner(body.partner);
     else if (body.action === "upsert-collaboration" && body.event?.id) await saveCollaboration(body.event);
-    else if (body.action === "add-option" && (body.kind === "collaboration_type" || body.kind === "committee") && body.value?.trim()) {
+    else if (body.action === "delete-organization" && body.id) {
+      const result = await getDatabasePool().query("delete from public.organizations where id=$1", [body.id]);
+      if (!result.rowCount) return NextResponse.json({ error: "Organization was not found." }, { status: 404 });
+    } else if (body.action === "delete-collaboration" && body.id) {
+      const result = await getDatabasePool().query("delete from public.collaborations where id=$1", [body.id]);
+      if (!result.rowCount) return NextResponse.json({ error: "Collaboration was not found." }, { status: 404 });
+    } else if (body.action === "add-option" && (body.kind === "collaboration_type" || body.kind === "committee") && body.value?.trim()) {
       await getDatabasePool().query("insert into public.directory_options(kind,value) values($1,$2) on conflict(kind,value) do update set updated_at=now()", [body.kind, body.value.trim()]);
     } else return NextResponse.json({ error: "Invalid database operation." }, { status: 400 });
     return NextResponse.json({ ok: true });
