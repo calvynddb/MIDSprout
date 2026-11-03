@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ClipboardList, Home, FolderOpen, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PartnerTable } from "@/components/PartnerTable";
+import { DirectorySelectionActions } from "@/components/DirectorySelectionActions";
 import { orderPartners, PartnerDirectoryControls, type PartnerSort } from "@/components/PartnerDirectoryControls";
 import { Brand } from "@/components/Brand";
 import { LeafButton } from "@/components/ui/leaf-button";
@@ -32,6 +33,7 @@ export function BranchesView() {
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<PartnerSort>("name-asc");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const category: PartnerCategory = activeCategory ?? PARTNER_CATEGORIES[0];
 
@@ -46,6 +48,13 @@ export function BranchesView() {
     const branchPartners = partners.filter((partner) => partner.category === category && (!normalized || [partner.organizationName, partner.acronym, partner.primaryContact, partner.email].some((value) => value.toLocaleLowerCase().includes(normalized))));
     return orderPartners(branchPartners, sort);
   }, [partners, category, query, sort]);
+  const selectedVisible = filtered.filter((partner) => selectedIds.includes(partner.id));
+  const selectVisible = (selected: boolean) => {
+    const visibleIds = new Set(filtered.map((partner) => partner.id));
+    setSelectedIds((current) => selected
+      ? [...new Set([...current, ...visibleIds])]
+      : current.filter((id) => !visibleIds.has(id)));
+  };
 
   const copyEmails = async () => {
     const emails = filtered.map((p) => p.email).join("; ");
@@ -103,9 +112,10 @@ export function BranchesView() {
             animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             exit={reduceMotion ? undefined : { opacity: 0, x: -14, filter: "blur(2px)" }}
             transition={{ duration: reduceMotion ? 0 : 0.22 }}
-            className="min-h-0 flex-1 overflow-auto"
+            className="flex min-h-0 flex-1 flex-col overflow-auto"
           >
-            <PartnerTable partners={filtered} emptyMessage={query ? "No organizations match your search." : "No organizations in this branch yet."} />
+            {selectedVisible.length > 0 && <DirectorySelectionActions selected={selectedVisible} onDeleted={(ids) => setSelectedIds((current) => current.filter((id) => !ids.includes(id)))} />}
+            <PartnerTable partners={filtered} selectedIds={selectedIds} onSelectionChange={(id, selected) => setSelectedIds((current) => selected ? [...new Set([...current, id])] : current.filter((item) => item !== id))} onSelectAll={selectVisible} emptyMessage={query ? "No organizations match your search." : "No organizations in this branch yet."} />
           </motion.div>
         </AnimatePresence>
         </div>

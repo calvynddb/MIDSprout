@@ -111,9 +111,9 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
 
   return <>
     <motion.button type="button" aria-label="Close collaboration" className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
-    <motion.aside className={`${LEAF_CUT} fixed left-1/2 top-1/2 z-50 flex h-[min(920px,calc(100vh-28px))] w-[min(1280px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sky-200 bg-white/96 shadow-2xl backdrop-blur-2xl`}
+    <motion.aside className={`${LEAF_CUT} profile-drawer fixed left-1/2 top-1/2 z-50 flex h-[min(920px,calc(100dvh-28px))] w-[min(1280px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sky-200 bg-white/96 shadow-2xl backdrop-blur-2xl`}
       initial={reduceMotion ? false : { x: "38vw", opacity: 0, scale: .97 }} animate={{ x: 0, opacity: 1, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { x: "38vw", opacity: 0, scale: .97 }} transition={reduceMotion ? { duration: .08 } : { type: "spring", stiffness: 230, damping: 26 }}>
-      <header className="flex items-center justify-between gap-4 border-b border-sky-200 px-6 py-4">
+      <header className="profile-drawer-header flex shrink-0 items-center justify-between gap-4 border-b border-sky-200 px-6 py-4">
         <div className="flex items-center gap-3"><span className="tile-icon"><CalendarDays size={19} /></span><h2 className="text-xl font-semibold text-slate-800">{form.name || "New collaboration"}</h2></div>
         <button type="button" aria-label="Close collaboration editor" onClick={close} className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><X size={19} /></button>
       </header>
@@ -141,7 +141,7 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
         </section>
       </div>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
+      <footer className="drawer-footer flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
         {selected && <div className="flex flex-wrap items-center gap-2">
           {!confirmDelete ? <LeafButton variant="outline" className="border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50" onClick={() => { setConfirmDelete(true); setDeleteError(""); }}><Trash2 size={16} /> Delete collaboration</LeafButton> : <div className="flex flex-wrap items-center gap-2" role="alert">
             <span className="mr-1 text-sm font-medium text-rose-800">Permanently delete this collaboration and its organization links?</span>

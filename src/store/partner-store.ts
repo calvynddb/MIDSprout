@@ -4,13 +4,14 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import seed from "@/data/partnerships.json";
 import type { Partnership } from "@/types/partnership";
-import { deleteDatabaseRecord, sendDatabaseMutation } from "@/lib/sync-client";
+import { deleteDatabaseRecord, deleteDatabaseRecords, sendDatabaseMutation } from "@/lib/sync-client";
 
 interface PartnerState {
   partners: Partnership[];
   upsertPartner: (partner: Partnership) => void;
   replacePartners: (partners: Partnership[]) => void;
   deletePartner: (id: string) => Promise<boolean>;
+  deletePartners: (ids: string[]) => Promise<boolean>;
 }
 
 export const usePartnerStore = create<PartnerState>()(persist((set) => ({
@@ -31,6 +32,15 @@ export const usePartnerStore = create<PartnerState>()(persist((set) => ({
   deletePartner: async (id) => {
     const deleted = await deleteDatabaseRecord("organization", id);
     if (deleted) set((state) => ({ partners: state.partners.filter((partner) => partner.id !== id) }));
+    return deleted;
+  },
+  deletePartners: async (ids) => {
+    if (ids.length === 0) return true;
+    const deleted = await deleteDatabaseRecords("organizations", ids);
+    if (deleted) {
+      const selected = new Set(ids);
+      set((state) => ({ partners: state.partners.filter((partner) => !selected.has(partner.id)) }));
+    }
     return deleted;
   },
 }), { name: "midsprout-organizations", storage: createJSONStorage(() => localStorage), partialize: (state) => ({ partners: state.partners }) }));

@@ -109,7 +109,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureDatabaseSchema();
-    const body = await request.json() as { action?: string; id?: string; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
+    const body = await request.json() as { action?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
     if (body.action === "bootstrap" && body.snapshot) {
       const pool = getDatabasePool();
       const client = await pool.connect();
@@ -144,6 +144,22 @@ export async function POST(request: Request) {
     } else if (body.action === "delete-collaboration" && body.id) {
       const result = await getDatabasePool().query("delete from public.collaborations where id=$1", [body.id]);
       if (!result.rowCount) return NextResponse.json({ error: "Collaboration was not found." }, { status: 404 });
+    } else if (body.action === "delete-organizations" && Array.isArray(body.ids) && body.ids.length > 0 && body.ids.length <= 191 && body.ids.every((id) => typeof id === "string")) {
+      const client = await getDatabasePool().connect();
+      try {
+        await client.query("begin");
+        const result = await client.query("delete from public.organizations where id = any($1::text[])", [body.ids]);
+        if (!result.rowCount) {
+          await client.query("rollback");
+          return NextResponse.json({ error: "No selected organizations were found." }, { status: 404 });
+        }
+        await client.query("commit");
+      } catch (error) {
+        await client.query("rollback");
+        throw error;
+      } finally {
+        client.release();
+      }
     } else if (body.action === "add-option" && (body.kind === "collaboration_type" || body.kind === "committee") && body.value?.trim()) {
       await getDatabasePool().query("insert into public.directory_options(kind,value) values($1,$2) on conflict(kind,value) do update set updated_at=now()", [body.kind, body.value.trim()]);
     } else return NextResponse.json({ error: "Invalid database operation." }, { status: 400 });

@@ -112,9 +112,9 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
 
   return <>
       <motion.button type="button" aria-label="Close profile" className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeDrawer} />
-      <motion.aside className={`${LEAF_CUT} fixed left-1/2 top-1/2 z-50 flex h-[min(920px,calc(100vh-28px))] w-[min(1440px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sky-200 bg-white/96 shadow-2xl backdrop-blur-2xl`}
+      <motion.aside className={`${LEAF_CUT} profile-drawer fixed left-1/2 top-1/2 z-50 flex h-[min(920px,calc(100dvh-28px))] w-[min(1440px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border border-sky-200 bg-white/96 shadow-2xl backdrop-blur-2xl`}
         initial={reduceMotion ? false : { x: "38vw", opacity: 0, scale: .97 }} animate={{ x: 0, opacity: 1, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { x: "38vw", opacity: 0, scale: .97 }} transition={reduceMotion ? { duration: .08 } : { type: "spring", stiffness: 230, damping: 26 }}>
-        <header className="flex items-center justify-between gap-4 border-b border-sky-200 px-6 py-5">
+        <header className="profile-drawer-header flex shrink-0 items-center justify-between gap-4 border-b border-sky-200 px-6 py-5">
           <div><p className="eyebrow">{drawerMode === "create" ? "New organization" : "Organization profile"}</p><h2 className="mt-1 text-2xl font-semibold text-slate-800">{form.organizationName || "New record"}</h2></div>
           <button type="button" onClick={closeDrawer} aria-label="Close profile" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><X size={19} /></button>
         </header>
@@ -134,7 +134,7 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
             {history.length ? <ul className="divide-y divide-sky-100">{history.map((collaboration) => <li key={collaboration.id} className="py-3"><p className="font-semibold text-slate-800">{collaboration.name}</p><p className="mt-1 text-sm text-slate-500">{collaboration.collaborationType} · {collaboration.status} · {collaboration.startDate || "Date TBD"}{collaboration.endDate && collaboration.endDate !== collaboration.startDate ? ` – ${collaboration.endDate}` : ""}{collaboration.startTime ? ` · ${collaboration.startTime}${collaboration.endTime ? `–${collaboration.endTime}` : ""}` : ""}</p><p title="Committees concerned with this collaboration" className="mt-1 text-sm text-slate-600">{collaboration.committees.length ? collaboration.committees.join(" · ") : "No committees set"}</p></li>)}</ul> : <p className="py-3 text-sm text-slate-400">No collaboration history yet.</p>}
           </section>}
         </div>
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
+        <footer className="drawer-footer flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
           {drawerMode === "edit" && <div className="flex flex-wrap items-center gap-2">
             {!confirmDelete ? <LeafButton variant="outline" className="border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50" onClick={() => { setConfirmDelete(true); setDeleteError(""); }}><Trash2 size={16} /> Delete organization</LeafButton> : <div className="flex flex-wrap items-center gap-2" role="alert">
               <span className="mr-1 text-sm font-medium text-rose-800">Permanently delete this organization and unlink it from collaborations?</span>
