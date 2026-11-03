@@ -86,12 +86,12 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
     const partner = {
       ...form,
       id: form.id === "draft" ? `p-${crypto.randomUUID()}` : form.id,
-      officialEmail: drawerMode === "create" ? form.email : form.officialEmail,
-      partnershipContactName: drawerMode === "create" ? form.primaryContact : form.partnershipContactName,
-      partnershipContactNumber: drawerMode === "create" ? form.phone : form.partnershipContactNumber,
-      email: drawerMode === "create" ? form.email : form.officialEmail || form.partnershipEmail || form.partnershipContactEmail,
-      primaryContact: drawerMode === "create" ? form.primaryContact : form.partnershipContactName,
-      phone: drawerMode === "create" ? form.phone : form.partnershipContactNumber,
+      officialEmail: form.officialEmail || form.email,
+      partnershipContactName: form.partnershipContactName || form.primaryContact,
+      partnershipContactNumber: form.partnershipContactNumber || form.phone,
+      email: form.officialEmail || form.partnershipEmail || form.partnershipContactEmail || form.email,
+      primaryContact: form.partnershipContactName || form.primaryContact,
+      phone: form.partnershipContactNumber || form.phone,
     };
     upsertPartner(partner);
     closeDrawer();
@@ -107,22 +107,14 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
         </header>
 
         <div className={`grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 lg:p-7 ${drawerMode === "create" ? "grid-cols-1" : "lg:grid-cols-[minmax(0,1.7fr)_minmax(300px,.8fr)]"}`}>
-          {drawerMode === "create" ? <section className="grid content-start gap-4 sm:grid-cols-2">
-            <div className="col-span-full flex items-center gap-3"><PartnerLogo acronym={form.acronym} name={form.organizationName || "Organization"} logoUrl={form.logoUrl} size="sm" /><label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"><ImagePlus size={16} />{form.logoUrl ? "Change logo" : "Add logo"}<input type="file" accept="image/*" className="sr-only" onChange={(e) => { void uploadLogo(e.target.files?.[0]); e.currentTarget.value = ""; }} /></label>{form.logoUrl && <button type="button" onClick={() => patch("logoUrl", "")} className="text-sm text-slate-500 hover:text-rose-600">Remove</button>}</div>
-            <div><FieldLabel hint="The abbreviation shown in lists">Abbreviated name</FieldLabel><Input value={form.acronym} onChange={(e) => patch("acronym", e.target.value)} /></div>
-            <div><FieldLabel>Branch</FieldLabel><select className="form-select" value={form.category} onChange={(e) => patch("category", e.target.value as PartnerCategory)}>{PARTNER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></div>
-            <div className="sm:col-span-2"><FieldLabel>Full name of organization</FieldLabel><Input value={form.organizationName} onChange={(e) => patch("organizationName", e.target.value)} /></div>
-            <div className="sm:col-span-2"><FieldLabel>Name of contact person for partnerships</FieldLabel><Input value={form.primaryContact} onChange={(e) => patch("primaryContact", e.target.value)} /></div>
-            <div><FieldLabel>Official email address</FieldLabel><Input type="email" value={form.email} onChange={(e) => patch("email", e.target.value)} /></div>
-            <div><FieldLabel hint="Optional">Contact number</FieldLabel><Input value={form.phone} onChange={(e) => patch("phone", e.target.value)} /></div>
-          </section> : <section className="profile-edit-fields grid content-start gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+          <section className="profile-edit-fields grid content-start gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="col-span-full flex items-center gap-3"><PartnerLogo acronym={form.acronym} name={form.organizationName || "Organization"} logoUrl={form.logoUrl} size="sm" /><label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"><ImagePlus size={16} />{form.logoUrl ? "Change logo" : "Add logo"}<input type="file" accept="image/*" className="sr-only" onChange={(e) => { void uploadLogo(e.target.files?.[0]); e.currentTarget.value = ""; }} /></label>{form.logoUrl && <button type="button" onClick={() => patch("logoUrl", "")} className="text-sm text-slate-500 hover:text-rose-600">Remove</button>}</div>
             <div className="col-span-full"><FieldLabel>Branch</FieldLabel><select className="form-select max-w-sm" value={form.category} onChange={(e) => patch("category", e.target.value as PartnerCategory)}>{PARTNER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></div>
             {PROFILE_GROUPS.map((group) => <div key={group.title} className="contents">
               <h3 className="col-span-full border-b border-sky-100 pb-1 pt-2 text-xs font-bold uppercase tracking-[.12em] text-sky-700">{group.title}</h3>
               {group.fields.map(([key, label]) => <div key={key}><FieldLabel>{label}</FieldLabel><Input type={label.toLowerCase().includes("email") ? "email" : "text"} value={form[key]} onChange={(e) => patch(key, e.target.value)} /></div>)}
             </div>)}
-          </section>}
+          </section>
 
           {drawerMode !== "create" && <section className="min-w-0 lg:border-l lg:border-sky-200 lg:pl-6">
             <div className="mb-2 flex items-center justify-between"><h3 className="text-lg font-semibold text-slate-800">Collaboration history</h3><span className="count-chip">{history.length}</span></div>

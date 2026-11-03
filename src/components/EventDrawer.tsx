@@ -62,6 +62,10 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
     const additions = visiblePartners.filter((partner) => !selectedIds.has(partner.id)).map((partner) => ({ partnerId: partner.id }));
     return { ...current, participants: [...current.participants, ...additions] };
   });
+  const removeFilteredPartners = () => setForm((current) => {
+    const visibleIds = new Set(visiblePartners.map((partner) => partner.id));
+    return { ...current, participants: current.participants.filter((item) => !visibleIds.has(item.partnerId)) };
+  });
 
   const patch = <K extends keyof PartnershipEvent>(key: K, value: PartnershipEvent[K]) => setForm((current) => ({ ...current, [key]: value }));
   const updateCommittees = (value: string) => {
@@ -115,7 +119,7 @@ function EventDrawerPanel({ selected }: { selected: PartnershipEvent | null }) {
         </section>
 
         <section className="event-partners-panel flex min-h-[440px] flex-col lg:border-l lg:border-sky-200 lg:pl-7">
-          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-semibold text-slate-800">Organizations <span className="count-chip ml-2">{form.participants.length}</span></h3><div className="flex items-center gap-2"><select aria-label="Filter branch" className="form-select w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as PartnerCategory | "All branches")}><option>All branches</option>{PARTNER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select><button type="button" className="mini-action" onClick={addFilteredPartners}>Add visible</button></div></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-semibold text-slate-800">Organizations <span className="count-chip ml-2">{form.participants.length}</span></h3><div className="flex items-center gap-2"><select aria-label="Filter branch" className="form-select w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as PartnerCategory | "All branches")}><option>All branches</option>{PARTNER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select><button type="button" className="mini-action" onClick={addFilteredPartners}>Add visible</button><button type="button" className="mini-action" onClick={removeFilteredPartners}>Remove visible</button></div></div>
           <label className="relative mt-3 block"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input className="search-input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find an organization" /></label>
           <div className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto border-y border-sky-100 py-2">
             {visiblePartners.map((partner) => <label key={partner.id} title={partner.category} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-sky-50"><input type="checkbox" checked={participantIds.has(partner.id)} onChange={(e) => setParticipant(partner.id, e.target.checked)} className="h-4 w-4 accent-sky-600" /><span className="min-w-0 truncate text-sm font-medium text-slate-700">{partner.organizationName}</span></label>)}
