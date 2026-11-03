@@ -8,10 +8,23 @@ import { BranchesView } from "@/components/views/BranchesView";
 import { RootView } from "@/components/views/RootView";
 import { TreeView } from "@/components/views/TreeView";
 import { useCanvasStore } from "@/store/canvas-store";
+import { useEventStore } from "@/store/event-store";
+import { usePartnerStore } from "@/store/partner-store";
+import type { Partnership, PartnershipEvent } from "@/types/partnership";
+
+type RemoteSnapshot = {
+  partners: Partnership[];
+  events: PartnershipEvent[];
+  collaborationTypes: string[];
+  committeeOptions: string[];
+  empty: boolean;
+  revision: string;
+};
 
 export function SpatialCanvas() {
   const view = useCanvasStore((s) => s.view);
   const reduceMotion = useReducedMotion();
+  const [databaseAvailable, setDatabaseAvailable] = useState(false);
   const lastView = useRef(view);
   const [rootArrival, setRootArrival] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
@@ -34,8 +47,64 @@ export function SpatialCanvas() {
     };
   }, [view, reduceMotion]);
 
+  useEffect(() => {
+    let cancelled = false;
+    let busy = false;
+    let revision = "";
+
+    const applySnapshot = (snapshot: RemoteSnapshot) => {
+      if (cancelled) return;
+      revision = snapshot.revision;
+      usePartnerStore.getState().replacePartners(snapshot.partners);
+      useEventStore.getState().replaceRemoteData(snapshot.events, snapshot.collaborationTypes, snapshot.committeeOptions);
+      setDatabaseAvailable(true);
+    };
+
+    const refresh = async (bootstrap = false) => {
+      if (busy || cancelled) return;
+      busy = true;
+      try {
+        const response = await fetch("/api/data", { cache: "no-store" });
+        if (!response.ok) throw new Error((await response.json() as { error?: string }).error ?? "Database unavailable.");
+        let snapshot = await response.json() as RemoteSnapshot;
+        if (snapshot.empty && !bootstrap) {
+          const seedResponse = await fetch("/api/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "bootstrap",
+              snapshot: {
+                partners: usePartnerStore.getState().partners,
+                events: useEventStore.getState().events,
+                collaborationTypes: useEventStore.getState().collaborationTypes,
+                committeeOptions: useEventStore.getState().committeeOptions,
+              },
+            }),
+          });
+          if (!seedResponse.ok) throw new Error("Could not initialize the shared database.");
+          snapshot = await seedResponse.json() as RemoteSnapshot;
+        }
+        if (!cancelled && (bootstrap || snapshot.revision !== revision)) applySnapshot(snapshot);
+      } catch (error) {
+        if (!cancelled) {
+          setDatabaseAvailable(false);
+          console.error("MIDSprout shared database is unavailable:", error);
+        }
+      } finally {
+        busy = false;
+      }
+    };
+
+    void refresh();
+    const timer = window.setInterval(() => { void refresh(true); }, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   return (
-    <div className={`canopy-bg relative h-screen w-screen overflow-hidden ${rootArrival ? "canopy-returning-root" : ""}`}>
+    <div data-database={databaseAvailable ? "connected" : "connecting"} className={`canopy-bg relative h-screen w-screen overflow-hidden ${rootArrival ? "canopy-returning-root" : ""}`}>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={view}

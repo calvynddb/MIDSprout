@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import seed from "@/data/events.json";
 import type { PartnershipEvent } from "@/types/partnership";
+import { sendDatabaseMutation } from "@/lib/sync-client";
 
 interface EventState {
   events: PartnershipEvent[];
@@ -15,6 +16,7 @@ interface EventState {
   openCreateEvent: () => void;
   closeEvent: () => void;
   upsertEvent: (event: PartnershipEvent) => void;
+  replaceRemoteData: (events: PartnershipEvent[], collaborationTypes: string[], committeeOptions: string[]) => void;
   addCollaborationType: (value: string) => void;
   addCommitteeOption: (value: string) => void;
 }
@@ -61,15 +63,31 @@ export const useEventStore = create<EventState>()(persist((set) => ({
   openEvent: (id) => set({ drawerOpen: true, selectedEventId: id }),
   openCreateEvent: () => set({ drawerOpen: true, selectedEventId: null }),
   closeEvent: () => set({ drawerOpen: false, selectedEventId: null }),
-  upsertEvent: (event) => set((state) => {
-    const index = state.events.findIndex((item) => item.id === event.id);
-    if (index < 0) return { events: [...state.events, event] };
-    const events = [...state.events];
-    events[index] = event;
-    return { events };
+  upsertEvent: (event) => {
+    set((state) => {
+      const index = state.events.findIndex((item) => item.id === event.id);
+      if (index < 0) return { events: [...state.events, event] };
+      const events = [...state.events];
+      events[index] = event;
+      return { events };
+    });
+    void sendDatabaseMutation({ action: "upsert-collaboration", event });
+  },
+  replaceRemoteData: (events, collaborationTypes, committeeOptions) => set({
+    events,
+    collaborationTypes: [...new Set([...DEFAULT_COLLABORATION_TYPES, ...collaborationTypes, ...events.map((event) => event.collaborationType)])],
+    committeeOptions: [...new Set([...DEFAULT_COMMITTEES, ...committeeOptions, ...events.flatMap((event) => event.committees)])],
   }),
-  addCollaborationType: (value) => set((state) => ({ collaborationTypes: addUniqueOption(state.collaborationTypes, value) })),
-  addCommitteeOption: (value) => set((state) => ({ committeeOptions: addUniqueOption(state.committeeOptions, value) })),
+  addCollaborationType: (value) => {
+    const before = useEventStore.getState().collaborationTypes;
+    set((state) => ({ collaborationTypes: addUniqueOption(state.collaborationTypes, value) }));
+    if (!before.some((item) => item.toLowerCase() === value.trim().toLowerCase())) void sendDatabaseMutation({ action: "add-option", kind: "collaboration_type", value });
+  },
+  addCommitteeOption: (value) => {
+    const before = useEventStore.getState().committeeOptions;
+    set((state) => ({ committeeOptions: addUniqueOption(state.committeeOptions, value) }));
+    if (!before.some((item) => item.toLowerCase() === value.trim().toLowerCase())) void sendDatabaseMutation({ action: "add-option", kind: "committee", value });
+  },
 }), {
   name: "midsprout-events",
   storage: createJSONStorage(() => localStorage),
