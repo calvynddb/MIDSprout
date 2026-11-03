@@ -481,6 +481,8 @@ body {
 .page-transition-smoke { position: absolute; z-index: 40; inset: -7%; pointer-events: none; background: radial-gradient(ellipse at 17% 31%,rgba(255,255,255,.98),transparent 58%),radial-gradient(ellipse at 78% 27%,rgba(255,255,255,.96),transparent 60%),radial-gradient(ellipse at 53% 82%,rgba(255,255,255,.98),transparent 62%),rgba(255,255,255,.94); filter: blur(16px); }
 
 .partner-directory-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.directory-sheet-heading { position: relative; min-height: 54px; padding-right: 450px; }
+.directory-sheet-heading .partner-directory-controls { position: absolute; top: 0; right: 0; z-index: 2; margin-left: 0; }
 .directory-search { position: relative; display: flex; width: 42px; height: 42px; flex: 0 0 auto; align-items: center; overflow: hidden; border: 1px solid #b9dcfb; border-radius: 999px; color: #2184c7; background: rgba(255,255,255,.94); box-shadow: 0 4px 12px rgba(30,112,176,.08); cursor: text; transition: width .32s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease,border-color .2s ease; }
 .directory-search:focus-within { width: clamp(190px,22vw,280px); border-color: #69b8f3; box-shadow: 0 0 0 3px rgba(89,174,236,.14),0 8px 20px rgba(30,112,176,.12); }
 .directory-search > svg { position: absolute; left: 12px; flex: 0 0 auto; }
@@ -489,7 +491,11 @@ body {
 .directory-search input::placeholder { color: #8298ac; }
 .directory-sort { display: flex; height: 42px; align-items: center; gap: 7px; border: 1px solid #b9dcfb; border-radius: 13px 13px 13px 5px; padding: 0 10px; color: #3983b8; background: rgba(255,255,255,.94); }
 .directory-sort select { max-width: 118px; border: 0; outline: 0; color: #45637f; background: transparent; font-size: .78rem; font-weight: 650; cursor: pointer; }
+.database-viewport > div { height: calc(100vh - 1.25rem - clamp(40px,5vh,64px)); }
 @media (max-width: 700px) {
+  .database-viewport > div { height: auto; min-height: calc(100vh - 1.25rem - clamp(40px,5vh,64px)); }
+  .directory-sheet-heading { min-height: 0; padding-right: 0; }
+  .directory-sheet-heading .partner-directory-controls { position: static; margin-left: auto; }
   .partner-directory-controls { gap: 6px; }
   .directory-search:focus-within { width: min(210px,45vw); }
   .directory-sort { height: 38px; padding-inline: 8px; }

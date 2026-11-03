@@ -11,8 +11,8 @@ export function PartnerTable({ partners, emptyMessage = "No organizations in thi
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className={cn(LEAF_CUT, "glass-panel overflow-hidden border border-white/70")}>
-      <div className="overflow-x-auto">
+    <div className={cn(LEAF_CUT, "glass-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-white/70")}>
+      <div className="min-h-0 flex-1 overflow-auto">
       <div className="min-w-[1020px]">
       <div className="grid grid-cols-[58px_minmax(260px,1.7fr)_minmax(170px,1fr)_minmax(190px,1fr)_minmax(220px,1.2fr)] gap-4 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         <span>Logo</span><span>Organization</span><span>Branch</span><span>Contact person</span><span>Email</span>

@@ -85,7 +85,7 @@ export function BranchesView() {
           ))}
         </nav>
         <div className="file-sheet flex min-h-0 flex-1 flex-col" data-branch-tone={PARTNER_CATEGORIES.indexOf(category)}>
-          <div className="mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
+          <div className="directory-sheet-heading mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
             <span className="tile-icon"><FolderOpen size={18} /></span>
             <div>
               <div className="flex flex-wrap items-center gap-2">
