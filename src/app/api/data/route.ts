@@ -14,6 +14,28 @@ type DataSnapshot = {
   revision: string;
 };
 
+function getDatabaseDiagnostic(error: unknown) {
+  const failure = error as { code?: unknown; message?: unknown };
+  const code = typeof failure?.code === "string" ? failure.code : "unknown";
+  const message = typeof failure?.message === "string" ? failure.message.toLowerCase() : "";
+  if (message.includes("missing supabase postgresql connection string")) {
+    return { code: "missing-connection-string", hint: "Confirm MIDSPROUTDATA_POSTGRES_URL is present in this Vercel environment." };
+  }
+  if (message.includes("must contain a postgresql connection url")) {
+    return { code: "invalid-connection-string", hint: "Use the PostgreSQL pooler URL, not the Supabase HTTPS project URL." };
+  }
+  if (code === "28P01" || code === "P1000") {
+    return { code: "database-authentication-failed", hint: "Update the Vercel connection URL with the current Supabase database password, then redeploy." };
+  }
+  if (code === "3D000") return { code: "database-not-found", hint: "Check that the connection URL ends with the correct database name, usually postgres." };
+  if (code === "42501") return { code: "database-permission-denied", hint: "The database role cannot create or access the MIDSprout tables." };
+  if (["ENOTFOUND", "EAI_AGAIN", "ETIMEDOUT", "ECONNREFUSED", "ECONNRESET"].includes(code)) {
+    return { code: "database-network-error", hint: "Check that the URL uses Supabase's Transaction Pooler and that the database is active." };
+  }
+  if (code.startsWith("42")) return { code: "database-schema-error", hint: "A database table or schema operation failed. Check the Supabase database logs." };
+  return { code: code === "unknown" ? "database-setup-failed" : `postgres-${code}`, hint: "Check the Supabase database logs for the failed request." };
+}
+
 async function readSnapshot(): Promise<DataSnapshot> {
   const pool = getDatabasePool();
   const [partners, collaborations, participants, committees, options, counts] = await Promise.all([
@@ -78,11 +100,9 @@ export async function GET() {
     await ensureDatabaseSchema();
     return NextResponse.json(await readSnapshot(), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("MIDSprout database read failed:", error);
-    const message = error instanceof Error && error.message.startsWith("Missing Supabase PostgreSQL")
-      ? "Set MIDSPROUTDATA_POSTGRES_URL in Vercel to the Supabase PostgreSQL connection string."
-      : "Could not connect to the MIDSprout database. Check the server environment variable and Supabase connection settings.";
-    return NextResponse.json({ error: message }, { status: 503 });
+    const diagnostic = getDatabaseDiagnostic(error);
+    console.error("MIDSprout database read failed:", diagnostic.code);
+    return NextResponse.json({ error: "Could not connect to the MIDSprout database.", diagnostic }, { status: 503 });
   }
 }
 
@@ -123,7 +143,8 @@ export async function POST(request: Request) {
     } else return NextResponse.json({ error: "Invalid database operation." }, { status: 400 });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("MIDSprout database write failed:", error);
-    return NextResponse.json({ error: "Could not save to the MIDSprout database." }, { status: 503 });
+    const diagnostic = getDatabaseDiagnostic(error);
+    console.error("MIDSprout database write failed:", diagnostic.code);
+    return NextResponse.json({ error: "Could not save to the MIDSprout database.", diagnostic }, { status: 503 });
   }
 }
