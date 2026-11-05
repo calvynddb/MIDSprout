@@ -608,3 +608,6 @@ body {
 .collaboration-sheet-heading > .directory-search { margin-left: auto; }
 
 @font-face { font-family: "Proxima Nova Black"; src: url("/fonts/proxima-nova-black.otf") format("opentype"); font-weight: 900; font-style: normal; font-display: swap; }
+
+.collaboration-sheet-heading .partner-directory-controls { position: static; margin-left: 0; }
+.database-view .glass-panel .collaboration-detail { font-size: clamp(.85rem,.98vw,1.05rem); }

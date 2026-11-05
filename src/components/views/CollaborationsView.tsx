@@ -9,7 +9,7 @@ import { useCanvasStore } from "@/store/canvas-store";
 import { useEventStore } from "@/store/event-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { duplicateCollaboration, isOverdue, todayInManila } from "@/lib/collaboration-features";
-import { cn } from "@/lib/utils";
+import { cn, LEAF_CUT } from "@/lib/utils";
 import type { PartnershipEvent } from "@/types/partnership";
 
 const columns = [
@@ -143,54 +143,30 @@ export function CollaborationsView() {
         <header className="mb-3 mt-3 flex flex-wrap items-end justify-between gap-3">
           <h2 className="database-title font-semibold text-slate-800">Collaborations</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <LeafButton onClick={openCreate}>
-              <Plus size={16} />
-              Add collaboration
-            </LeafButton>
-            <LeafButton variant="glass" onClick={() => setOfficersOpen(true)}>
-              <UsersRound size={16} />
-              Officers
-            </LeafButton>
             <LeafButton variant="outline" onClick={() => goTo("root")}>
               <Home size={16} />
               Back to Root
             </LeafButton>
-            <button 
-              type="button" 
-              onClick={() => setArchived(!archived)}
-              aria-label={archived ? "Show active collaborations" : "Show archived collaborations"}
-              title={archived ? "Show active collaborations" : "Show archived collaborations"}
-              aria-pressed={archived}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-[18px_18px_18px_7px] transition-all duration-200"
-              style={{
-                backgroundColor: archived ? "#eff6ff" : "rgba(255,255,255,0.4)",
-                border: archived ? "2px solid #0ea5e9" : "1px solid #BAE6FD",
-                color: archived ? "#0c4a6e" : "#0f172a",
-                boxShadow: archived ? "0 4px 12px rgba(14,165,233,0.15)" : "0 2px 6px rgba(0,0,0,0.08)"
-              }}
-            >
-              <Archive size={16} />
-              
-            </button>
+
           </div>
         </header>
 
-        <div className="folder-tabs">
-          <span className="folder-tab-top folder-tab-active">Collaborations</span>
+        <div className="folder-tabs branch-folder-tabs">
+          <span data-branch-tone={0} className="folder-tab-top folder-tab-active">Collaborations</span>
         </div>
 
-        <div className="file-sheet flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div data-branch-tone={0} className="file-sheet flex min-h-0 flex-1 flex-col">
           <div className="directory-sheet-heading collaboration-sheet-heading mb-4 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-4">
-            <span className="tile-icon"><FolderOpen size={19} /></span><span className="count-chip">{visible.length} records</span>
+            <span className="tile-icon"><FolderOpen size={18} /></span><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-semibold text-slate-800">Collaborations</h3><span className="count-chip">{visible.length} records</span></div><p className="text-sm text-slate-500">Partnerships, committees, and participating organizations.</p></div><div className="ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-label={archived ? "Show active collaborations" : "Show archived collaborations"} title={archived ? "Show active collaborations" : "Show archived collaborations"} aria-pressed={archived} onClick={() => setArchived(!archived)}><Archive size={16} /></LeafButton>
             
-            <label className="directory-search" aria-label="Search collaborations">
+            <div className="partner-directory-controls"><label className="directory-search" aria-label="Search collaborations">
               <Search size={17} aria-hidden="true" />
               <input 
                 value={query} 
                 onChange={(e) => setQuery(e.target.value)} 
                 placeholder="Search collaborations" 
               />
-            </label>
+            </label></div>
 
             <div className="flex items-center gap-2">
               <label className="directory-sort" aria-label="Collaboration status">
@@ -239,12 +215,20 @@ export function CollaborationsView() {
               </details>
             </div>
 
-
+            <LeafButton variant="primary" onClick={openCreate}>
+              <Plus size={16} />
+              Add collaboration
+            </LeafButton>
+            <LeafButton variant="glass" onClick={() => setOfficersOpen(true)}>
+              <UsersRound size={16} />
+              Officers
+            </LeafButton>
+            </div>
           </div>
 
           {error && <p role="alert" className="mb-3 px-2 text-sm font-medium text-rose-600">{error}</p>}
 
-          <div className="glass-panel min-h-0 flex-1 overflow-hidden border border-white/70 flex flex-col rounded-[30px_6px_30px_6px]">
+          <div className={cn(LEAF_CUT, "glass-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-white/70")}>
             <div className="overflow-auto min-h-0 flex-1">
               <div className="min-w-[1100px]">
                 <div className={`grid ${grid} gap-4 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sticky top-0 z-10`}>
@@ -253,7 +237,7 @@ export function CollaborationsView() {
                       key={field}
                       type="button"
                       className="text-left hover:text-sky-700 transition-colors"
-                      style={{ minHeight: 0, padding: 0, font: "inherit" }}
+                      style={{ minHeight: 0, padding: 0, font: "inherit", letterSpacing: "inherit", textTransform: "inherit", color: "inherit" }}
                       aria-pressed={sort.field === field}
                       onClick={() => changeSort(field)}
                     >
@@ -268,11 +252,11 @@ export function CollaborationsView() {
                   {visible.map((event) => (
                     <div 
                       key={event.id} 
-                      className="group relative"
+                      className="group relative border-b border-[#cfe6ff] px-5 py-2"
                     >
                       <button
                         type="button"
-                        className={`grid ${grid} w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-sky-50/80`}
+                        className={`grid ${grid} w-full items-center gap-4 rounded-lg px-2 py-3 text-left transition hover:bg-sky-50/80`}
                         onClick={() => openEvent(event.id)}
                       >
                         <div className="min-w-0">
@@ -289,7 +273,7 @@ export function CollaborationsView() {
                           </p>
                         </div>
 
-                        <div className="text-sm text-slate-600">
+                        <div className="text-sm text-slate-600 collaboration-detail">
                           {event.startDate || "Date TBD"}
                           {event.endDate && event.endDate !== event.startDate && (
                             <span className="block text-xs text-slate-400">to {event.endDate}</span>
@@ -302,8 +286,8 @@ export function CollaborationsView() {
                           </span>
                         </div>
 
-                        <div className="text-sm text-slate-600 truncate">
-                          {nameOf(event.officerId) || <span className="text-slate-400 italic">Unassigned</span>}
+                        <div className="text-sm text-slate-600 truncate collaboration-detail">
+                          {nameOf(event.officerId) || <span className="text-slate-500">Unassigned</span>}
                         </div>
 
                         <div className="text-sm font-medium text-slate-700 text-center">
