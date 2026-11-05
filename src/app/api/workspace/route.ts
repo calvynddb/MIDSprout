@@ -17,7 +17,7 @@ export async function GET() {
     if (code === "42P01") {
       return NextResponse.json({ notes: [], officers: [], setupRequired: true }, { headers: { "Cache-Control": "no-store" } });
     }
-    return NextResponse.json({ error: "Could not load shared notes and officers.", notes: [], officers: [], setupRequired: false }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ error: "Could not load shared notes and officers.", notes: [], officers: [], setupRequired: false }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 }
 

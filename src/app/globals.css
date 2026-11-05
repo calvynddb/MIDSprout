@@ -598,3 +598,7 @@ body {
 .overview-collaboration-area .overview-nav { background: linear-gradient(145deg,#fafdff,#e7f4ff); color:#176db8; height:100%; }
 .overview-collaboration-area .overview-nav-title { font-size:clamp(2rem,4.2vw,4.4rem); }
 @media (max-width:720px) { .overview-collaboration-area .overview-nav { min-height:140px; } .overview-collaboration-area .overview-nav-title { font-size:clamp(1.6rem,6vw,2.5rem); } }
+
+.branch-sheet-heading.directory-sheet-heading { padding-right: 0; }
+.branch-sheet-heading .branch-sheet-actions { flex: 0 1 auto; }
+.branch-sheet-heading .partner-directory-controls { position: static; margin-left: 0; }

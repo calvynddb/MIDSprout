@@ -92,7 +92,7 @@ export function BranchesView() {
           ))}
         </nav>
         <div className="file-sheet flex min-h-0 flex-1 flex-col" data-branch-tone={PARTNER_CATEGORIES.indexOf(category)}>
-          <div className="directory-sheet-heading mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
+          <div className="directory-sheet-heading branch-sheet-heading mb-4 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-4">
             <span className="tile-icon"><FolderOpen size={18} /></span>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -101,16 +101,16 @@ export function BranchesView() {
               </div>
               <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
             </div>
-            <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label>
+            <div className="branch-sheet-actions ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-pressed={showArchived} onClick={() => { setShowArchived(!showArchived); setSelectedIds([]); }}>{showArchived ? "Active organizations" : "Archived organizations"}</LeafButton>
             <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
-            <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={selectedVisible} selected={selectedVisible} />
+            <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
             <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
               <Plus size={16} /> Add organization
             </LeafButton>
             <LeafButton variant="glass" onClick={copyEmails}>
               <ClipboardList size={16} />
               {copied ? "Copied" : "Copy all emails"}
-            </LeafButton>
+            </LeafButton></div>
           </div>
         <AnimatePresence mode="wait">
           <motion.div
