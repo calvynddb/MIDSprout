@@ -71,19 +71,11 @@ export function BranchesView() {
     <section className="database-view database-viewport flex h-screen w-screen items-center justify-center overflow-y-auto px-4 pt-5 pb-[clamp(40px,5vh,64px)] sm:px-8">
       <div className="flex h-full min-h-0 w-full max-w-[1760px] flex-col">
         <Brand compact />
-        <header className="mb-3 mt-3 flex flex-wrap items-end justify-between gap-3">
+<header className="mb-3 mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="database-title font-semibold text-slate-800">Branches</h2>
           </div>
           <div className="flex items-center gap-2">
-            <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
-              <Plus size={16} /> Add organization
-            </LeafButton>
-            <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
-            <LeafButton variant="glass" onClick={copyEmails}>
-              <ClipboardList size={16} />
-              {copied ? "Copied" : "Copy All Emails"}
-            </LeafButton>
             <LeafButton variant="outline" onClick={() => goTo("tree")}><ArrowLeft size={16} /> Back to Tree</LeafButton>
             <LeafButton variant="outline" onClick={() => goTo("root")}>
               <Home size={16} />
@@ -115,16 +107,34 @@ export function BranchesView() {
           ))}
         </nav>
         <div className="file-sheet flex min-h-0 flex-1 flex-col" data-branch-tone={PARTNER_CATEGORIES.indexOf(category)}>
-          <div className="directory-sheet-heading mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
-            <span className="tile-icon"><FolderOpen size={18} /></span>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-semibold text-slate-800">{category}</h3>
-                <span className="count-chip">{filtered.length} records</span>
+          <div className="directory-sheet-heading mb-4 flex flex-col gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="tile-icon"><FolderOpen size={18} /></span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-semibold text-slate-800">{category}</h3>
+                    <span className="count-chip">{filtered.length} records</span>
+                  </div>
+                  <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
+                </div>
               </div>
-              <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
+              <div className="flex items-center gap-2">
+                <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
+                <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
+                  <Plus size={16} />
+                  Add organization
+                </LeafButton>
+                <LeafButton variant="glass" onClick={copyEmails}>
+                  <ClipboardList size={16} />
+                  {copied ? "Copied" : "Copy all emails"}
+                </LeafButton>
+              </div>
             </div>
-            <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label><PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label>
+              <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
+            </div>
           </div>
         <AnimatePresence mode="wait">
           <motion.div
