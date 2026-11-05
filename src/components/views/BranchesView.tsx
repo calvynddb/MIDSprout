@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ClipboardList, Home, FolderOpen, Plus } from "lucide-react";
+import { ArrowLeft, Archive, ClipboardList, ChevronDown, Home, FolderOpen, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { OrganizationExport } from "@/components/OrganizationExport";
 import { PartnerTable } from "@/components/PartnerTable";
@@ -89,6 +89,21 @@ export function BranchesView() {
               <Home size={16} />
               Back to Root
             </LeafButton>
+            <button 
+              type="button" 
+              onClick={() => setShowArchived(!showArchived)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-[18px_18px_18px_7px] transition-all duration-200"
+              style={{
+                backgroundColor: showArchived ? "#eff6ff" : "rgba(255,255,255,0.4)",
+                border: showArchived ? "2px solid #0ea5e9" : "1px solid #BAE6FD",
+                color: showArchived ? "#0c4a6e" : "#0f172a",
+                boxShadow: showArchived ? "0 4px 12px rgba(14,165,233,0.15)" : "0 2px 6px rgba(0,0,0,0.08)"
+              }}
+            >
+              <Archive size={16} />
+              <ChevronDown size={14} className={`transition-transform ${showArchived ? "rotate-180" : ""}`} />
+              <span>Archived</span>
+            </button>
           </div>
         </header>
         <nav className="folder-tabs branch-folder-tabs" aria-label="Partnership branches">

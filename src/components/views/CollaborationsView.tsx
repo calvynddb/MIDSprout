@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownUp, Archive, Copy, Home, Plus, RotateCcw, UsersRound, Search, Filter } from "lucide-react";
+import { ArrowDownUp, Archive, ChevronDown, Copy, Home, Plus, RotateCcw, UsersRound, Search, Filter } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { LeafButton } from "@/components/ui/leaf-button";
 import { OfficerManager } from "@/components/OfficerManager";
@@ -155,6 +155,21 @@ export function CollaborationsView() {
               <Home size={16} />
               Back to Root
             </LeafButton>
+            <button 
+              type="button" 
+              onClick={() => setArchived(!archived)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-[18px_18px_18px_7px] transition-all duration-200"
+              style={{
+                backgroundColor: archived ? "#eff6ff" : "rgba(255,255,255,0.4)",
+                border: archived ? "2px solid #0ea5e9" : "1px solid #BAE6FD",
+                color: archived ? "#0c4a6e" : "#0f172a",
+                boxShadow: archived ? "0 4px 12px rgba(14,165,233,0.15)" : "0 2px 6px rgba(0,0,0,0.08)"
+              }}
+            >
+              <Archive size={16} />
+              <ChevronDown size={14} className={`transition-transform ${archived ? "rotate-180" : ""}`} />
+              <span>Archived</span>
+            </button>
           </div>
         </header>
 
@@ -240,17 +255,6 @@ export function CollaborationsView() {
               >
                 {sort.descending ? "↓" : "↑"}
               </button>
-
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none">
-                <input 
-                  type="checkbox" 
-                  className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                  checked={archived} 
-                  onChange={(e) => setArchived(e.target.checked)} 
-                />
-                <Archive size={14} className="text-slate-400" />
-                <span>Archived</span>
-              </label>
             </div>
           </div>
 

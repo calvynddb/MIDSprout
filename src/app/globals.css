@@ -201,7 +201,17 @@ body {
 .folder-tab-top:hover { background: white; color: #334155; }
 .folder-tab-top.folder-tab-active { z-index: 1; background: white; color: #0369a1; }
 .folder-index { color: #94a3b8; font-size: 9px; letter-spacing: .05em; }
-.file-sheet { position: relative; z-index: 0; min-height: 0; border-radius: 18px 18px 18px 7px; padding: 18px; }
+.file-sheet { position: relative; z-index: 0; min-height: 0; border-radius: 18px 18px 18px 7px; padding: 18px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.database-view { overflow: hidden; }
+.database-view .overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+.profile-drawer {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* Root file: one centered sheet with four connected, functional regions. */
 .root-viewport { padding-top: 18px; padding-bottom: clamp(40px, 5vh, 64px); }
@@ -229,7 +239,7 @@ body {
 .overview-nav-tree .overview-nav-icon { border-color: #c8e4ff; background: linear-gradient(145deg,#fff,#e9f5ff); }
 .overview-nav-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 7px; transform: translateZ(22px); }
 .overview-nav-title { font-size: clamp(24px,3.3vw,44px); font-weight: 800; letter-spacing: -.045em; line-height: 1; }
-.overview-nav-count { font-size: clamp(15px,1.6vw,21px); font-weight: 700; opacity: .88; }
+.overview-nav-count { font-size: clamp(22px,2.3vw,32px); font-weight: 800; opacity: .95; }
 .overview-nav-arrow { flex: 0 0 auto; transform: translateZ(22px); }
 .overview-events { display: flex; min-height: 0; min-width: 0; flex-direction: column; grid-area: events; overflow: hidden; border: 1px solid #a9d3fb; border-radius: 20px 20px 20px 7px; background: linear-gradient(145deg,rgba(255,255,255,.9),rgba(240,249,255,.93)); padding: 13px; box-shadow: 0 11px 25px rgba(36,108,174,.08), 0 2px 0 rgba(255,255,255,.9) inset; }
 .overview-events-top { display: flex; min-height: 39px; align-items: center; justify-content: space-between; border-bottom: 1px solid #c2e1ff; padding: 0 3px 9px; }
