@@ -5,25 +5,35 @@ import { Archive, Save } from "lucide-react";
 import { LeafButton } from "@/components/ui/leaf-button";
 import { OfficerSelect } from "@/components/OfficerManager";
 import { useWorkspaceStore } from "@/store/workspace-store";
+import { cn } from "@/lib/utils";
 import type { StickyNote } from "@/types/partnership";
 import { NoteWindow } from "./NoteWindow";
 
-export const noteColors = { yellow:"#fff4be", blue:"#dcefff", pink:"#ffe4ed", green:"#e3f2d6" };
+export const noteColors = { yellow: "#ffed9d", blue: "#c2e1ff", pink: "#ffc9e1", green: "#d4edc0" };
 
-export function NoteEditor({ note, onClose }: {note:StickyNote; onClose:()=>void}) {
-  const [draft,setDraft]=useState(note);
-  const [busy,setBusy]=useState(false);
-  const [error,setError]=useState("");
-  const setupRequired=useWorkspaceStore(s=>s.setupRequired);
-  const id=useId();
-  const dirty=JSON.stringify(note)!==JSON.stringify(draft);
-  useEffect(()=>{
-    if(!dirty && !busy) return;
-    const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};
-    window.addEventListener("beforeunload",warn);
-    return ()=>window.removeEventListener("beforeunload",warn);
-  },[dirty,busy]);
-  const close=()=>{if(!busy && (!dirty || window.confirm("Discard your unsaved note changes?"))) onClose();};
+export function NoteEditor({ note, onClose }: { note: StickyNote; onClose: () => void }) {
+  const [draft, setDraft] = useState(note);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const setupRequired = useWorkspaceStore((s) => s.setupRequired);
+  const id = useId();
+  const dirty = JSON.stringify(note) !== JSON.stringify(draft);
+  
+  useEffect(() => {
+    if (!dirty || busy) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, busy]);
+
+  const close = () => {
+    if (!busy && (!dirty || confirm("You have unsaved changes. Do you want to discard them?"))) {
+      onClose();
+    }
+  };
   const save=async()=>{
     if(busy || setupRequired) return;
     if(!draft.title.trim()&&!draft.body.trim()){setError("Write a title or note before saving.");return;}
@@ -47,7 +57,22 @@ export function NoteEditor({ note, onClose }: {note:StickyNote; onClose:()=>void
       <div><label htmlFor={`${id}-title`} className="mb-1 block text-xs font-semibold text-slate-500">Title (optional)</label><input id={`${id}-title`} className="form-select" maxLength={120} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></div>
       <div><label htmlFor={`${id}-body`} className="mb-1 block text-xs font-semibold text-slate-500">Note</label><textarea id={`${id}-body`} className="form-select min-h-36" rows={6} maxLength={4000} value={draft.body} onChange={e=>setDraft({...draft,body:e.target.value})}/></div>
       <OfficerSelect value={draft.officerId} onChange={officerId=>setDraft({...draft,officerId})} label="Tag an officer" disabled={busy}/>
-      <div role="group" aria-label="Note color" className="flex gap-3">{(Object.keys(noteColors) as StickyNote["color"][]).map(color=><button key={color} type="button" aria-label={color} aria-pressed={draft.color===color} className={`h-8 w-8 rounded-full border-2 ${draft.color===color?"border-sky-500":"border-transparent"}`} style={{backgroundColor:noteColors[color]}} onClick={()=>setDraft({...draft,color})}/>)}</div>
+      <div role="group" aria-label="Note color" className="flex items-center gap-3">
+        {(Object.keys(noteColors) as StickyNote["color"][]).map(color => (
+          <button 
+            key={color} 
+            type="button" 
+            aria-label={color} 
+            aria-pressed={draft.color === color} 
+            className={cn("h-8 w-8 rounded-full border-4 transition-transform", draft.color === color ? "border-slate-800 scale-110" : "border-slate-200 hover:border-slate-400")} 
+            style={{ backgroundColor: noteColors[color] }} 
+            onClick={() => setDraft({ ...draft, color })} 
+          />
+        ))}
+        <div className="ml-2 h-8 w-8 rounded-full border-4 border-dashed border-slate-300 flex items-center justify-center text-slate-400">
+           <div className="h-4 w-4 rounded-full bg-gradient-to-tr from-rose-500 via-yellow-400 to-sky-500"/>
+        </div>
+      </div>
     </fieldset></form>
     {setupRequired&&<p className="mt-4 text-sm text-amber-700">Shared notes need database setup before saving.</p>}
     {error&&<p className="mt-4 text-sm text-rose-700" role="alert">{error}</p>}

@@ -32,24 +32,49 @@ export function SpatialCanvas() {
   const [displayedView, setDisplayedView] = useState(view);
   const [rootArrival, setRootArrival] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const transitionActive = useRef(false);
 
   useEffect(() => {
+    // Skip if nothing changed
     if (lastView.current === view && lastMotionPreference.current === reduceMotion) return;
+    
     lastView.current = view;
     lastMotionPreference.current = reduceMotion;
+    transitionActive.current = true;
+    
     const start = window.setTimeout(() => {
-      setTransitioning(!reduceMotion);
-      setRootArrival(false);
-      if (reduceMotion) setDisplayedView(view);
+      if (!transitionActive.current) return;
+      if (reduceMotion) {
+        setDisplayedView(view);
+        transitionActive.current = false;
+      } else {
+        setTransitioning(true);
+        setRootArrival(false);
+      }
     }, 0);
-    // Swap the page only when the existing smoke has covered the outgoing screen.
-    const swap = window.setTimeout(() => {
-      setDisplayedView(view);
-      setRootArrival(view === "root");
-    }, reduceMotion ? 0 : 420);
-    const finish = window.setTimeout(() => setTransitioning(false), reduceMotion ? 0 : 1120);
-    const settle = window.setTimeout(() => setRootArrival(false), reduceMotion ? 0 : 5420);
-    return () => { [start, swap, finish, settle].forEach(window.clearTimeout); };
+    
+    if (!reduceMotion) {
+      const swap = window.setTimeout(() => {
+        if (!transitionActive.current) return;
+        setDisplayedView(view);
+        setRootArrival(view === "root");
+      }, 420);
+      
+      const settle = window.setTimeout(() => {
+        if (!transitionActive.current) return;
+        setRootArrival(false);
+      }, 5420);
+      
+      const finish = window.setTimeout(() => {
+        if (!transitionActive.current) return;
+        setTransitioning(false);
+        transitionActive.current = false;
+      }, 1120);
+      
+      return () => { [start, swap, finish, settle].forEach(window.clearTimeout); };
+    }
+    
+    return () => { window.clearTimeout(start); };
   }, [view, reduceMotion]);
 
   useEffect(() => {
@@ -125,7 +150,7 @@ export function SpatialCanvas() {
         </motion.div>
 
       {transitioning && <motion.div
-        key={`transition-${view}`}
+        key="page-transition-smoke"
         aria-hidden="true"
         className="page-transition-smoke"
         style={{ pointerEvents: "auto" }}

@@ -25,9 +25,9 @@ export function NoteCard({note,width,height,onEdit}:{note:StickyNote;width:numbe
     pending.current=false;setSaving(false);setPosition(null);
     if(!success)setError(useWorkspaceStore.getState().error||"Move could not be saved.");
   };
-  return <article aria-label={note.title||"Sticky note"} className="pointer-events-auto absolute flex h-56 w-[248px] max-w-full flex-col overflow-hidden rounded-br-2xl border border-black/10 shadow-xl" style={{left,top,zIndex:position?10000:note.zIndex,backgroundColor:noteColors[note.color]}}>
-    <header className="flex items-center justify-between border-b border-black/5 bg-white/20 px-3 py-1">
-      <button type="button" className="flex min-h-8 touch-none items-center gap-1 text-xs text-slate-600" aria-disabled={saving} aria-label={`Move ${note.title||"note"}; use arrow keys to reposition`}
+  return <article aria-label={note.title||"Sticky note"} className="pointer-events-auto absolute flex h-56 w-[248px] max-w-full flex-col overflow-hidden rounded-br-2xl border-2 shadow-xl bg-white" style={{left,top,zIndex:position?10000:note.zIndex,borderColor:noteColors[note.color]}}>
+    <header className="flex items-center justify-between px-3 py-1.5" style={{ backgroundColor: `${noteColors[note.color]}44` }}>
+      <button type="button" className="flex min-h-8 touch-none items-center gap-1 text-xs text-slate-700 font-medium" aria-disabled={saving} aria-label={`Move ${note.title||"note"}; use arrow keys to reposition`}
         onPointerDown={e=>{if(pending.current||e.button!==0)return;e.preventDefault();drag.current={x:e.clientX,y:e.clientY,left,top,note:structuredClone(note)};e.currentTarget.setPointerCapture(e.pointerId);}}
         onPointerMove={e=>{const origin=drag.current;if(origin)setPosition({left:clamp(origin.left+e.clientX-origin.x,base.horizontal),top:clamp(origin.top+e.clientY-origin.y,base.vertical)});}}
         onPointerUp={e=>{const origin=drag.current;if(!origin)return;drag.current=null;e.currentTarget.releasePointerCapture(e.pointerId);const x=clamp(origin.left+e.clientX-origin.x,base.horizontal),y=clamp(origin.top+e.clientY-origin.y,base.vertical);if(Math.abs(x-origin.left)+Math.abs(y-origin.top)>2)void persist(x,y,origin.note);else setPosition(null);}}
@@ -35,9 +35,9 @@ export function NoteCard({note,width,height,onEdit}:{note:StickyNote;width:numbe
         onKeyDown={e=>{if(!e.key.startsWith("Arrow"))return;e.preventDefault();if(pending.current)return;const step=e.shiftKey?40:12;void persist(left+(e.key==="ArrowRight"?step:e.key==="ArrowLeft"?-step:0),top+(e.key==="ArrowDown"?step:e.key==="ArrowUp"?-step:0),note);}}>
         <GripHorizontal size={16}/>{saving?"Saving…":"Move"}
       </button>
-      <button type="button" aria-label={`Edit ${note.title||"note"}`} disabled={saving} className="rounded-full p-2 text-slate-600 hover:bg-white/40" onClick={onEdit}><Pencil size={14}/></button>
+      <button type="button" aria-label={`Edit ${note.title||"note"}`} disabled={saving} className="rounded-full p-2 text-slate-700 hover:bg-white/80" onClick={onEdit}><Pencil size={14}/></button>
     </header>
-    <div className="min-h-0 flex-1 overflow-auto px-4 py-3">{note.title&&<h3 className="mb-2 text-sm font-semibold text-slate-700">{note.title}</h3>}<p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{note.body}</p></div>
-    <footer className="flex items-center gap-1 px-4 pb-3 text-[11px] text-slate-500"><UserRound size={12}/>{officer?.name||"For the team"}{error&&<span className="ml-auto text-rose-700" title={error} role="status">Not saved</span>}</footer>
+    <div className="min-h-0 flex-1 overflow-auto px-4 py-3" style={{ backgroundColor: `${noteColors[note.color]}15` }}>{note.title&&<h3 className="mb-2 text-sm font-semibold text-slate-800">{note.title}</h3>}<p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700">{note.body}</p></div>
+    <footer className="flex items-center gap-1 px-4 pb-3 pt-2 text-[11px] text-slate-500 border-t border-slate-100" style={{ backgroundColor: `${noteColors[note.color]}22` }}><UserRound size={12}/>{officer?.name||"For the team"}{error&&<span className="ml-auto text-rose-700" title={error} role="status">Not saved</span>}</footer>
   </article>;
 }
