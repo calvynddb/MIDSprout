@@ -13,7 +13,6 @@ import type { StickyNote } from "@/types/partnership";
 export function SharedNotes() {
   const notes=useWorkspaceStore(s=>s.notes);
   const officers=useWorkspaceStore(s=>s.officers);
-  const setupRequired=useWorkspaceStore(s=>s.setupRequired);
   const loading=useWorkspaceStore(s=>s.loading);
   const connectionError=useWorkspaceStore(s=>s.error);
   const [show,setShow]=useState(true);
@@ -39,8 +38,7 @@ export function SharedNotes() {
       <LeafButton variant="glass" className="px-3 py-2 text-xs" onClick={()=>setShow(!show)} aria-pressed={show}>{show?<EyeOff size={14}/>:<Eye size={14}/>} {show?"Hide notes":"Show notes"}</LeafButton>
       <LeafButton variant="glass" className="px-3 py-2 text-xs" onClick={()=>setList(true)}><List size={14}/>Notes ({active.length})</LeafButton>
       <LeafButton variant="glass" className="px-3 py-2 text-xs" onClick={()=>setRoster(true)}><UsersRound size={14}/>Officers</LeafButton>
-      {setupRequired&&!loading&&<span className="w-full text-right text-[11px] text-slate-600">Shared notes need database setup</span>}
-      {connectionError&&!setupRequired&&<span className="w-full max-w-xs text-right text-[11px] text-rose-700" role="status">{connectionError}</span>}
+      {connectionError&&<span className="w-full max-w-xs text-right text-[11px] text-rose-700" role="status">{connectionError}</span>}
     </div>
     <div ref={board} className="pointer-events-none fixed inset-3 z-20">{show&&size.width>0&&active.map(note=><NoteCard key={note.id} note={note} width={size.width} height={size.height} onEdit={()=>setEditing(structuredClone(note))}/>)}</div>
     {editing&&<NoteEditor key={editing.id} note={editing} onClose={()=>setEditing(null)}/>}
@@ -50,7 +48,7 @@ export function SharedNotes() {
       {error&&<p role="alert" className="mb-3 text-sm text-rose-700">{error}</p>}
       <div className="space-y-2">{visible.map(note=><div key={note.id} className="flex items-center justify-between gap-3 rounded-lg border border-sky-100 p-3">
         <button type="button" className="min-w-0 flex-1 text-left" onClick={()=>{if(note.archivedAt)return;setList(false);setShow(true);setEditing(structuredClone(note));}}><strong className="block truncate text-sm text-slate-700">{note.title||note.body.slice(0,60)||"Untitled note"}</strong><span className="text-xs text-slate-500">{officers.find(o=>o.id===note.officerId)?.name||"For the team"}</span></button>
-        {note.archivedAt&&<LeafButton variant="outline" disabled={busy!==null||setupRequired} onClick={async()=>{setBusy(note.id);setError("");const success=await useWorkspaceStore.getState().restoreNote(note.id,note.version);setBusy(null);if(!success)setError(useWorkspaceStore.getState().error||"Could not restore this note.");}}><RotateCcw size={14}/>{busy===note.id?"Restoring…":"Restore"}</LeafButton>}
+        {note.archivedAt&&<LeafButton variant="outline" disabled={busy!==null} onClick={async()=>{setBusy(note.id);setError("");const success=await useWorkspaceStore.getState().restoreNote(note.id,note.version);setBusy(null);if(!success)setError(useWorkspaceStore.getState().error||"Could not restore this note.");}}><RotateCcw size={14}/>{busy===note.id?"Restoring…":"Restore"}</LeafButton>}
       </div>)}{!visible.length&&<p className="py-6 text-sm text-slate-500">{archived?"No archived notes.":"Leave a note for the team using Add note."}</p>}</div>
     </NoteWindow>}
   </>;

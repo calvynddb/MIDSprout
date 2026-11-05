@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureDatabaseSchema, getDatabasePool } from "@/lib/database";
-import type { Partnership, PartnershipEvent } from "@/types/partnership";
+import type { Partnership, PartnershipEvent, StickyNote, Officer } from "@/types/partnership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,7 +109,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureDatabaseSchema();
-    const body = await request.json() as { action?: string; entity?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
+    const body = await request.json() as { action?: string; entity?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions">; note?: StickyNote; officer?: Officer; };
     if ((body.action === "archive" || body.action === "restore") && (body.entity === "organization" || body.entity === "collaboration") && typeof body.id === "string" && body.id) {
       const table = body.entity === "organization" ? "organizations" : "collaborations";
       const archivedAt = body.action === "archive" ? new Date().toISOString() : null;
@@ -169,6 +169,13 @@ export async function POST(request: Request) {
       }
     } else if (body.action === "add-option" && (body.kind === "collaboration_type" || body.kind === "committee") && body.value?.trim()) {
       await getDatabasePool().query("insert into public.directory_options(kind,value) values($1,$2) on conflict(kind,value) do update set updated_at=now()", [body.kind, body.value.trim()]);
+    } else if (body.action === "upsert-note" && body.note) {
+      await getDatabasePool().query("insert into public.workspace_items(kind,id,record,updated_at) values('note',$1,$2::jsonb,now()) on conflict(kind,id) do update set record=excluded.record,updated_at=now()", [body.note.id, JSON.stringify(body.note)]);
+    } else if (body.action === "upsert-officer" && body.officer) {
+      await getDatabasePool().query("insert into public.workspace_items(kind,id,record,updated_at) values('officer',$1,$2::jsonb,now()) on conflict(kind,id) do update set record=excluded.record,updated_at=now()", [body.officer.id, JSON.stringify(body.officer)]);
+    } else if ((body.action === "archive" || body.action === "restore") && (body.kind === "note" || body.kind === "officer") && body.id) {
+      const archivedAt = body.action === "archive" ? new Date().toISOString() : null;
+      await getDatabasePool().query("update public.workspace_items set record=jsonb_set(record,'{archivedAt}',$1::jsonb),updated_at=now() where kind=$2 and id=$3", [JSON.stringify(archivedAt), body.kind, body.id]);
     } else return NextResponse.json({ error: "Invalid database operation." }, { status: 400 });
     return NextResponse.json({ ok: true });
   } catch (error) {

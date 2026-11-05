@@ -15,7 +15,6 @@ export function NoteEditor({ note, onClose }: { note: StickyNote; onClose: () =>
   const [draft, setDraft] = useState(note);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const setupRequired = useWorkspaceStore((s) => s.setupRequired);
   const id = useId();
   const dirty = JSON.stringify(note) !== JSON.stringify(draft);
   
@@ -35,7 +34,7 @@ export function NoteEditor({ note, onClose }: { note: StickyNote; onClose: () =>
     }
   };
   const save=async()=>{
-    if(busy || setupRequired) return;
+    if(busy) return;
     if(!draft.title.trim()&&!draft.body.trim()){setError("Write a title or note before saving.");return;}
     setBusy(true);setError("");
     const success=await useWorkspaceStore.getState().upsertNote({...draft,title:draft.title.trim(),body:draft.body.trim()});
@@ -51,7 +50,7 @@ export function NoteEditor({ note, onClose }: { note: StickyNote; onClose: () =>
   };
   return <NoteWindow title={note.version?"Edit sticky note":"New sticky note"} onClose={close} footer={<>
     {note.version?<LeafButton variant="outline" disabled={busy} onClick={()=>void archive()}><Archive size={15}/>Archive</LeafButton>:<span className="text-xs text-slate-500">Visible to the whole team</span>}
-    <LeafButton disabled={busy||setupRequired} onClick={()=>void save()}><Save size={15}/>{busy?"Saving…":"Save note"}</LeafButton>
+    <LeafButton disabled={busy} onClick={()=>void save()}><Save size={15}/>{busy?"Saving…":"Save note"}</LeafButton>
   </>}>
     <form onSubmit={e=>{e.preventDefault();void save();}}><fieldset disabled={busy} className="space-y-4">
       <div><label htmlFor={`${id}-title`} className="mb-1 block text-xs font-semibold text-slate-500">Title (optional)</label><input id={`${id}-title`} className="form-select" maxLength={120} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></div>
@@ -74,7 +73,6 @@ export function NoteEditor({ note, onClose }: { note: StickyNote; onClose: () =>
         </div>
       </div>
     </fieldset></form>
-    {setupRequired&&<p className="mt-4 text-sm text-amber-700">Shared notes need database setup before saving.</p>}
     {error&&<p className="mt-4 text-sm text-rose-700" role="alert">{error}</p>}
   </NoteWindow>;
 }

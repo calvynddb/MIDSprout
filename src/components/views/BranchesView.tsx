@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Archive, ClipboardList, ChevronDown, Home, FolderOpen, Plus } from "lucide-react";
+import { ArrowLeft, ClipboardList, FolderOpen, Home, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { OrganizationExport } from "@/components/OrganizationExport";
 import { PartnerTable } from "@/components/PartnerTable";
@@ -81,21 +81,6 @@ export function BranchesView() {
               <Home size={16} />
               Back to Root
             </LeafButton>
-            <button 
-              type="button" 
-              onClick={() => setShowArchived(!showArchived)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-[18px_18px_18px_7px] transition-all duration-200"
-              style={{
-                backgroundColor: showArchived ? "#eff6ff" : "rgba(255,255,255,0.4)",
-                border: showArchived ? "2px solid #0ea5e9" : "1px solid #BAE6FD",
-                color: showArchived ? "#0c4a6e" : "#0f172a",
-                boxShadow: showArchived ? "0 4px 12px rgba(14,165,233,0.15)" : "0 2px 6px rgba(0,0,0,0.08)"
-              }}
-            >
-              <Archive size={16} />
-              <ChevronDown size={14} className={`transition-transform ${showArchived ? "rotate-180" : ""}`} />
-              <span>Archived</span>
-            </button>
           </div>
         </header>
         <nav className="folder-tabs branch-folder-tabs" aria-label="Partnership branches">
@@ -107,34 +92,25 @@ export function BranchesView() {
           ))}
         </nav>
         <div className="file-sheet flex min-h-0 flex-1 flex-col" data-branch-tone={PARTNER_CATEGORIES.indexOf(category)}>
-          <div className="directory-sheet-heading mb-4 flex flex-col gap-3 border-b border-slate-100 pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="tile-icon"><FolderOpen size={18} /></span>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-lg font-semibold text-slate-800">{category}</h3>
-                    <span className="count-chip">{filtered.length} records</span>
-                  </div>
-                  <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
-                </div>
+          <div className="directory-sheet-heading mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
+            <span className="tile-icon"><FolderOpen size={18} /></span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-800">{category}</h3>
+                <span className="count-chip">{filtered.length} records</span>
               </div>
-              <div className="flex items-center gap-2">
-                <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
-                <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
-                  <Plus size={16} />
-                  Add organization
-                </LeafButton>
-                <LeafButton variant="glass" onClick={copyEmails}>
-                  <ClipboardList size={16} />
-                  {copied ? "Copied" : "Copy all emails"}
-                </LeafButton>
-              </div>
+              <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label>
-              <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
-            </div>
+            <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label>
+            <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
+            <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={selectedVisible} selected={selectedVisible} />
+            <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
+              <Plus size={16} /> Add organization
+            </LeafButton>
+            <LeafButton variant="glass" onClick={copyEmails}>
+              <ClipboardList size={16} />
+              {copied ? "Copied" : "Copy all emails"}
+            </LeafButton>
           </div>
         <AnimatePresence mode="wait">
           <motion.div

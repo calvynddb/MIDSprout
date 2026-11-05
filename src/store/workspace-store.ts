@@ -1,8 +1,9 @@
 "use client";
 import { create } from "zustand";
 import type { Officer, StickyNote } from "@/types/partnership";
-import type { WorkspaceSnapshot } from "@/lib/workspace-validation";
-interface WorkspaceState extends WorkspaceSnapshot {
+interface WorkspaceState {
+  notes: StickyNote[];
+  officers: Officer[];
   error: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
@@ -16,10 +17,10 @@ interface WorkspaceState extends WorkspaceSnapshot {
 let epoch = 0;
 let refreshing = false;
 async function request(body?: Record<string, unknown>) {
-  const response = await fetch("/api/workspace", { method: body ? "POST" : "GET", cache: "no-store", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+  const response = await fetch("/api/data", { method: body ? "POST" : "GET", cache: "no-store", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Could not connect to the shared workspace.");
-  return result as WorkspaceSnapshot;
+  return { notes: result.notes || [], officers: result.officers || [] };
 }
 async function mutate(body: Record<string, unknown>) {
   epoch += 1;
@@ -28,7 +29,7 @@ async function mutate(body: Record<string, unknown>) {
   catch (error) { epoch += 1; useWorkspaceStore.setState({ error: error instanceof Error ? error.message : "Could not save." }); return false; }
 }
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  notes: [], officers: [], setupRequired: false, error: null, loading: true,
+  notes: [], officers: [], error: null, loading: true,
   refresh: async () => {
     if (refreshing) return;
     refreshing = true; const started = epoch;
