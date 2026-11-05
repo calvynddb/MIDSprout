@@ -2,6 +2,19 @@ import { getDatabasePool } from "@/lib/database";
 import type { Officer, StickyNote } from "@/types/partnership";
 import { expectedVersion, nextWorkspaceRecord, workspaceId, workspaceRecord, WorkspaceError, type WorkspaceKind, type WorkspaceSnapshot } from "./workspace-validation";
 
+export async function ensureWorkspaceSchema() {
+  await getDatabasePool().query(`
+    create table if not exists public.workspace_items (
+      kind text not null check (kind in ('note','officer')),
+      id text not null,
+      record jsonb not null,
+      updated_at timestamptz not null default now(),
+      primary key (kind,id)
+    );
+    alter table public.workspace_items enable row level security;
+  `);
+}
+
 export async function readWorkspace(): Promise<WorkspaceSnapshot> {
   try {
     const result = await getDatabasePool().query<{ kind: WorkspaceKind; record: StickyNote | Officer }>("select kind, record from public.workspace_items order by id");

@@ -17,10 +17,9 @@ interface WorkspaceState {
 let epoch = 0;
 let refreshing = false;
 async function request(body?: Record<string, unknown>) {
-  const response = await fetch("/api/workspace", { method: body ? "POST" : "GET", cache: "no-store", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+  const response = await fetch("/api/data", { method: body ? "POST" : "GET", cache: "no-store", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Could not connect to the shared workspace.");
-  if (result.setupRequired) throw new Error("Shared notes and officers need the workspace setup SQL applied first.");
   return { notes: result.notes || [], officers: result.officers || [] };
 }
 async function mutate(body: Record<string, unknown>) {
