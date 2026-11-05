@@ -602,3 +602,9 @@ body {
 .branch-sheet-heading.directory-sheet-heading { padding-right: 0; }
 .branch-sheet-heading .branch-sheet-actions { flex: 0 1 auto; }
 .branch-sheet-heading .partner-directory-controls { position: static; margin-left: 0; }
+
+.database-view .database-title { font-family: "Proxima Nova Black", "Proxima Nova", var(--font-inter), sans-serif; font-weight: 900; }
+.collaboration-sheet-heading.directory-sheet-heading { padding-right: 0; }
+.collaboration-sheet-heading > .directory-search { margin-left: auto; }
+
+@font-face { font-family: "Proxima Nova Black"; src: url("/fonts/proxima-nova-black.otf") format("opentype"); font-weight: 900; font-style: normal; font-display: swap; }

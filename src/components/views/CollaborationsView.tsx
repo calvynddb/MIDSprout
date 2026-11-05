@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownUp, Archive, ChevronDown, Copy, Filter, Home, Plus, RotateCcw, Search, UsersRound } from "lucide-react";
+import { Archive, FolderOpen, Copy, Filter, Home, Plus, RotateCcw, Search, UsersRound } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { OfficerManager } from "@/components/OfficerManager";
 import { LeafButton } from "@/components/ui/leaf-button";
@@ -9,7 +9,7 @@ import { useCanvasStore } from "@/store/canvas-store";
 import { useEventStore } from "@/store/event-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { duplicateCollaboration, isOverdue, todayInManila } from "@/lib/collaboration-features";
-import { cn, LEAF_CUT } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { PartnershipEvent } from "@/types/partnership";
 
 const columns = [
@@ -158,6 +158,9 @@ export function CollaborationsView() {
             <button 
               type="button" 
               onClick={() => setArchived(!archived)}
+              aria-label={archived ? "Show active collaborations" : "Show archived collaborations"}
+              title={archived ? "Show active collaborations" : "Show archived collaborations"}
+              aria-pressed={archived}
               className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-[18px_18px_18px_7px] transition-all duration-200"
               style={{
                 backgroundColor: archived ? "#eff6ff" : "rgba(255,255,255,0.4)",
@@ -167,8 +170,7 @@ export function CollaborationsView() {
               }}
             >
               <Archive size={16} />
-              <ChevronDown size={14} className={`transition-transform ${archived ? "rotate-180" : ""}`} />
-              <span>Archived</span>
+              
             </button>
           </div>
         </header>
@@ -177,9 +179,9 @@ export function CollaborationsView() {
           <span className="folder-tab-top folder-tab-active">Collaborations</span>
         </div>
 
-        <div className={cn("file-sheet flex min-h-0 flex-1 flex-col overflow-hidden", LEAF_CUT)}>
-          <div className="directory-sheet-heading mb-4 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-4">
-            <span className="count-chip">{visible.length} records</span>
+        <div className="file-sheet flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="directory-sheet-heading collaboration-sheet-heading mb-4 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-4">
+            <span className="tile-icon"><FolderOpen size={19} /></span><span className="count-chip">{visible.length} records</span>
             
             <label className="directory-search" aria-label="Search collaborations">
               <Search size={17} aria-hidden="true" />
@@ -237,30 +239,12 @@ export function CollaborationsView() {
               </details>
             </div>
 
-            <div className="ml-auto flex items-center gap-4">
-              <label className="directory-sort" aria-label="Sort collaborations">
-                <ArrowDownUp size={15} aria-hidden="true" />
-                <select value={sort.field} onChange={(e) => setSort({ field: e.target.value as SortField, descending: false })}>
-                  {columns.map(([field, label]) => (
-                    <option key={field} value={field}>{label}</option>
-                  ))}
-                </select>
-              </label>
-              
-              <button 
-                type="button" 
-                className="mini-action" 
-                aria-label={sort.descending ? "Sort ascending" : "Sort descending"} 
-                onClick={() => setSort((c) => ({ ...c, descending: !c.descending }))}
-              >
-                {sort.descending ? "↓" : "↑"}
-              </button>
-            </div>
+
           </div>
 
           {error && <p role="alert" className="mb-3 px-2 text-sm font-medium text-rose-600">{error}</p>}
 
-          <div className="glass-panel min-h-0 flex-1 overflow-hidden border border-white/70 flex flex-col">
+          <div className="glass-panel min-h-0 flex-1 overflow-hidden border border-white/70 flex flex-col rounded-[30px_6px_30px_6px]">
             <div className="overflow-auto min-h-0 flex-1">
               <div className="min-w-[1100px]">
                 <div className={`grid ${grid} gap-4 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sticky top-0 z-10`}>

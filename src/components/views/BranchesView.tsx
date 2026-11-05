@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ClipboardList, FolderOpen, Home, Plus } from "lucide-react";
+import { Archive, ArrowLeft, ClipboardList, FolderOpen, Home, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { OrganizationExport } from "@/components/OrganizationExport";
 import { PartnerTable } from "@/components/PartnerTable";
@@ -101,7 +101,7 @@ export function BranchesView() {
               </div>
               <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
             </div>
-            <div className="branch-sheet-actions ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-pressed={showArchived} onClick={() => { setShowArchived(!showArchived); setSelectedIds([]); }}>{showArchived ? "Active organizations" : "Archived organizations"}</LeafButton>
+            <div className="branch-sheet-actions ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-label={showArchived ? "Show active organizations" : "Show archived organizations"} title={showArchived ? "Show active organizations" : "Show archived organizations"} aria-pressed={showArchived} onClick={() => { setShowArchived(!showArchived); setSelectedIds([]); }}><Archive size={16} /></LeafButton>
             <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
             <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
             <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>

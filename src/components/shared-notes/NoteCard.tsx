@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { GripHorizontal, Pencil, UserRound } from "lucide-react";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import type { StickyNote } from "@/types/partnership";
-import { normalizedPosition, notePosition } from "@/lib/note-position";
+import { normalizedPosition, notePosition, noteScale } from "@/lib/note-position";
 import { noteColors } from "./NoteEditor";
 
 export function NoteCard({note,width,height,onEdit}:{note:StickyNote;width:number;height:number;onEdit:()=>void}) {
@@ -25,7 +25,7 @@ export function NoteCard({note,width,height,onEdit}:{note:StickyNote;width:numbe
     pending.current=false;setSaving(false);setPosition(null);
     if(!success)setError(useWorkspaceStore.getState().error||"Move could not be saved.");
   };
-  return <article aria-label={note.title||"Sticky note"} className="pointer-events-auto absolute flex h-56 w-[248px] max-w-full flex-col overflow-hidden rounded-br-2xl border-2 shadow-xl bg-white" style={{left,top,zIndex:position?10000:note.zIndex,borderColor:noteColors[note.color]}}>
+  return <article aria-label={note.title||"Sticky note"} className="pointer-events-auto absolute flex h-56 w-[248px] flex-col overflow-hidden rounded-br-2xl border-2 shadow-xl bg-white" style={{left,top,transform:`scale(${noteScale(width,height)})`,transformOrigin:"top left",zIndex:position?10000:note.zIndex,borderColor:noteColors[note.color]}}>
     <header className="flex items-center justify-between px-3 py-1.5" style={{ backgroundColor: `${noteColors[note.color]}44` }}>
       <button type="button" className="flex min-h-8 touch-none items-center gap-1 text-xs text-slate-700 font-medium" aria-disabled={saving} aria-label={`Move ${note.title||"note"}; use arrow keys to reposition`}
         onPointerDown={e=>{if(pending.current||e.button!==0)return;e.preventDefault();drag.current={x:e.clientX,y:e.clientY,left,top,note:structuredClone(note)};e.currentTarget.setPointerCapture(e.pointerId);}}
