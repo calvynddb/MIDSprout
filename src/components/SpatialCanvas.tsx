@@ -23,6 +23,8 @@ type RemoteSnapshot = {
   revision: string;
 };
 
+const smokeAnimation = { opacity: [0, 0.98, 0.9, 0] };
+
 export function SpatialCanvas() {
   const view = useCanvasStore((s) => s.view);
   const reduceMotion = useReducedMotion();
@@ -46,6 +48,8 @@ export function SpatialCanvas() {
       if (!transitionActive.current) return;
       if (reduceMotion) {
         setDisplayedView(view);
+        setTransitioning(false);
+        setRootArrival(false);
         transitionActive.current = false;
       } else {
         setTransitioning(true);
@@ -61,17 +65,10 @@ export function SpatialCanvas() {
       }, 420);
       
       const settle = window.setTimeout(() => {
-        if (!transitionActive.current) return;
         setRootArrival(false);
       }, 5420);
       
-      const finish = window.setTimeout(() => {
-        if (!transitionActive.current) return;
-        setTransitioning(false);
-        transitionActive.current = false;
-      }, 1120);
-      
-      return () => { [start, swap, finish, settle].forEach(window.clearTimeout); };
+      return () => { [start, swap, settle].forEach(window.clearTimeout); };
     }
     
     return () => { window.clearTimeout(start); };
@@ -155,8 +152,12 @@ export function SpatialCanvas() {
         className="page-transition-smoke"
         style={{ pointerEvents: "auto" }}
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.98, 0.9, 0] }}
+        animate={smokeAnimation}
         transition={{ duration: 1.12, times: [0, 0.38, 0.64, 1], ease: "easeInOut" }}
+        onAnimationComplete={() => {
+          setTransitioning(false);
+          transitionActive.current = false;
+        }}
       />}
       <PartnerDrawer />
       <EventDrawer />
