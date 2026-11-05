@@ -12,9 +12,15 @@ interface PartnerState {
   replacePartners: (partners: Partnership[]) => void;
   deletePartner: (id: string) => Promise<boolean>;
   deletePartners: (ids: string[]) => Promise<boolean>;
+  archivePartner: (id: string) => Promise<boolean>;
+  restorePartner: (id: string) => Promise<boolean>;
+  lastError: string | null;
 }
 
 export const usePartnerStore = create<PartnerState>()(persist((set) => ({
+  lastError: null,
+  archivePartner: (id) => setPartnerArchived(id, true),
+  restorePartner: (id) => setPartnerArchived(id, false),
   partners: seed as Partnership[],
   upsertPartner: (partner) => {
     set((state) => {
@@ -44,3 +50,14 @@ export const usePartnerStore = create<PartnerState>()(persist((set) => ({
     return deleted;
   },
 }), { name: "midsprout-organizations", storage: createJSONStorage(() => localStorage), partialize: (state) => ({ partners: state.partners }) }));
+
+async function setPartnerArchived(id: string, archive: boolean): Promise<boolean> {
+  usePartnerStore.setState({ lastError: null });
+  try {
+    const response = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: archive ? "archive" : "restore", entity: "organization", id }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not update organization archive.");
+    usePartnerStore.setState((state) => ({ partners: state.partners.map((partner) => partner.id === id ? { ...partner, archivedAt: result.archivedAt } : partner) }));
+    return true;
+  } catch (error) { usePartnerStore.setState({ lastError: error instanceof Error ? error.message : "Could not update organization archive." }); return false; }
+}

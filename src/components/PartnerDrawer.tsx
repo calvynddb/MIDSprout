@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ImagePlus, Save, Trash2, X } from "lucide-react";
+import { Archive, ClipboardList, ExternalLink, ImagePlus, Phone, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FieldLabel, Input } from "@/components/ui/input";
 import { PartnerLogo } from "@/components/PartnerLogo";
 import { LeafButton } from "@/components/ui/leaf-button";
 import { LEAF_CUT } from "@/lib/utils";
+import { contactEmails, contactLinks } from "@/lib/contact-shortcuts";
 import { useCanvasStore } from "@/store/canvas-store";
 import { useEventStore } from "@/store/event-store";
 import { usePartnerStore } from "@/store/partner-store";
@@ -67,6 +68,17 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [emailRole, setEmailRole] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const emails = contactEmails(form);
+  const selectedEmail = emails.find((email) => email.role === emailRole) ?? emails[0];
+  const phone = (form.partnershipContactNumber || form.phone || "").trim();
+  const links = contactLinks(form);
+  const copyContact = async (value: string, label: string) => {
+    if (!value) return;
+    try { await navigator.clipboard.writeText(value); setContactMessage(`${label} copied.`); }
+    catch { setContactMessage("Could not copy. Check your browser's clipboard permission."); }
+  };
 
   const patch = <K extends keyof Partnership>(key: K, value: Partnership[K]) => setForm((current) => ({ ...current, [key]: value }));
   const uploadLogo = async (file?: File) => {
@@ -100,6 +112,15 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
     upsertPartner(partner);
     closeDrawer();
   };
+  const archiveOrRestore = async () => {
+    if (!selectedPartnerId || deleting) return;
+    setDeleting(true); setDeleteError("");
+    const store = usePartnerStore.getState();
+    const success = await (selected?.archivedAt ? store.restorePartner(selectedPartnerId) : store.archivePartner(selectedPartnerId));
+    setDeleting(false);
+    if (success) closeDrawer();
+    else setDeleteError(usePartnerStore.getState().lastError ?? "Could not update this organization.");
+  };
   const removePartner = async () => {
     if (!selectedPartnerId || deleting) return;
     setDeleting(true);
@@ -130,12 +151,27 @@ function PartnerDrawerPanel({ selected, selectedPartnerId, drawerMode, initialCa
           </section>
 
           {drawerMode !== "create" && <section className="min-w-0 lg:border-l lg:border-sky-200 lg:pl-6">
+            <div className="mb-6">
+              <h3 className="mb-3 text-lg font-semibold text-slate-800">Quick contacts</h3>
+              <label htmlFor="profile-contact-email" className="mb-1 block text-xs text-slate-500">Email address to copy</label>
+              <select id="profile-contact-email" className="form-select" value={selectedEmail?.role ?? ""} disabled={!emails.length} onChange={(event) => setEmailRole(event.target.value)}>
+                {!emails.length && <option value="">No email address saved</option>}
+                {emails.map((email) => <option key={email.role} value={email.role}>{email.label}: {email.value}</option>)}
+              </select>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <LeafButton variant="outline" className="px-3 py-2 text-xs" disabled={!selectedEmail} onClick={() => void copyContact(selectedEmail?.value ?? "", "Email address")}><ClipboardList size={14} />Copy email</LeafButton>
+                <LeafButton variant="outline" className="px-3 py-2 text-xs" disabled={!phone} onClick={() => void copyContact(phone, "Phone number")}><Phone size={14} />Copy phone</LeafButton>
+              </div>
+              {links.length > 0 && <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2">{links.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-sky-700 hover:underline"><ExternalLink size={12} />{link.label}</a>)}</div>}
+              {contactMessage && <p className="mt-2 text-xs text-slate-600" role="status">{contactMessage}</p>}
+            </div>
             <div className="mb-2 flex items-center justify-between"><h3 className="text-lg font-semibold text-slate-800">Collaboration history</h3><span className="count-chip">{history.length}</span></div>
             {history.length ? <ul className="divide-y divide-sky-100">{history.map((collaboration) => <li key={collaboration.id} className="py-3"><p className="font-semibold text-slate-800">{collaboration.name}</p><p className="mt-1 text-sm text-slate-500">{collaboration.collaborationType} · {collaboration.status} · {collaboration.startDate || "Date TBD"}{collaboration.endDate && collaboration.endDate !== collaboration.startDate ? ` – ${collaboration.endDate}` : ""}{collaboration.startTime ? ` · ${collaboration.startTime}${collaboration.endTime ? `–${collaboration.endTime}` : ""}` : ""}</p><p title="Committees concerned with this collaboration" className="mt-1 text-sm text-slate-600">{collaboration.committees.length ? collaboration.committees.join(" · ") : "No committees set"}</p></li>)}</ul> : <p className="py-3 text-sm text-slate-400">No collaboration history yet.</p>}
           </section>}
         </div>
         <footer className="drawer-footer flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-sky-200 px-6 py-4">
           {drawerMode === "edit" && <div className="flex flex-wrap items-center gap-2">
+            <LeafButton variant="outline" disabled={deleting} onClick={() => void archiveOrRestore()}>{selected?.archivedAt ? <RotateCcw size={16} /> : <Archive size={16} />}{selected?.archivedAt ? "Restore organization" : "Archive organization"}</LeafButton>
             {!confirmDelete ? <LeafButton variant="outline" className="border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50" onClick={() => { setConfirmDelete(true); setDeleteError(""); }}><Trash2 size={16} /> Delete organization</LeafButton> : <div className="flex flex-wrap items-center gap-2" role="alert">
               <span className="mr-1 text-sm font-medium text-rose-800">Permanently delete this organization and unlink it from collaborations?</span>
               <LeafButton variant="ghost" className="px-3 py-2 text-slate-600" disabled={deleting} onClick={() => { setConfirmDelete(false); setDeleteError(""); }}>Cancel</LeafButton>

@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ClipboardList, Home, FolderOpen, Plus } from "lucide-react";
+import { ArrowLeft, ClipboardList, Home, FolderOpen, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { OrganizationExport } from "@/components/OrganizationExport";
 import { PartnerTable } from "@/components/PartnerTable";
 import { DirectorySelectionActions } from "@/components/DirectorySelectionActions";
 import { orderPartners, PartnerDirectoryControls, type PartnerSort } from "@/components/PartnerDirectoryControls";
+import { deduplicatedEmails } from "@/lib/contact-shortcuts";
 import { Brand } from "@/components/Brand";
 import { LeafButton } from "@/components/ui/leaf-button";
 import { cn } from "@/lib/utils";
@@ -24,7 +26,9 @@ const PURPOSES: Record<PartnerCategory, string> = {
 };
 
 export function BranchesView() {
-  const partners = usePartnerStore((s) => s.partners);
+  const allPartners = usePartnerStore((s) => s.partners);
+  const [showArchived, setShowArchived] = useState(false);
+  const partners = useMemo(() => allPartners.filter((partner) => Boolean(partner.archivedAt) === showArchived), [allPartners, showArchived]);
   const goTo = useCanvasStore((s) => s.goTo);
   const activeCategory = useCanvasStore((s) => s.activeCategory);
   const setActiveCategory = useCanvasStore((s) => s.setActiveCategory);
@@ -57,7 +61,7 @@ export function BranchesView() {
   };
 
   const copyEmails = async () => {
-    const emails = filtered.map((p) => p.email).join("; ");
+    const emails = deduplicatedEmails(filtered);
     await navigator.clipboard.writeText(emails);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -75,10 +79,12 @@ export function BranchesView() {
             <LeafButton variant="primary" onClick={() => openCreateDrawer(category)}>
               <Plus size={16} /> Add organization
             </LeafButton>
+            <OrganizationExport all={orderPartners(allPartners.filter((partner) => !partner.archivedAt), sort)} visible={filtered} selected={selectedVisible} />
             <LeafButton variant="glass" onClick={copyEmails}>
               <ClipboardList size={16} />
               {copied ? "Copied" : "Copy All Emails"}
             </LeafButton>
+            <LeafButton variant="outline" onClick={() => goTo("tree")}><ArrowLeft size={16} /> Back to Tree</LeafButton>
             <LeafButton variant="outline" onClick={() => goTo("root")}>
               <Home size={16} />
               Back to Root
@@ -103,7 +109,7 @@ export function BranchesView() {
               </div>
               <p className="text-sm text-slate-500">{PURPOSES[category]}</p>
             </div>
-            <PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
+            <label className="inline-flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setSelectedIds([]); }} />Archived</label><PartnerDirectoryControls query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} />
           </div>
         <AnimatePresence mode="wait">
           <motion.div
@@ -115,7 +121,7 @@ export function BranchesView() {
             className="flex min-h-0 flex-1 flex-col overflow-auto"
           >
             {selectedVisible.length > 0 && <DirectorySelectionActions selected={selectedVisible} onDeleted={(ids) => setSelectedIds((current) => current.filter((id) => !ids.includes(id)))} />}
-            <PartnerTable partners={filtered} selectedIds={selectedIds} onSelectionChange={(id, selected) => setSelectedIds((current) => selected ? [...new Set([...current, id])] : current.filter((item) => item !== id))} onSelectAll={selectVisible} emptyMessage={query ? "No organizations match your search." : "No organizations in this branch yet."} />
+            <PartnerTable sort={sort} onSortChange={setSort} partners={filtered} selectedIds={selectedIds} onSelectionChange={(id, selected) => setSelectedIds((current) => selected ? [...new Set([...current, id])] : current.filter((item) => item !== id))} onSelectAll={selectVisible} emptyMessage={query ? "No organizations match your search." : "No organizations in this branch yet."} />
           </motion.div>
         </AnimatePresence>
         </div>

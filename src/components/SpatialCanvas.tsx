@@ -1,12 +1,14 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { PartnerDrawer } from "@/components/PartnerDrawer";
 import { EventDrawer } from "@/components/EventDrawer";
 import { BranchesView } from "@/components/views/BranchesView";
 import { RootView } from "@/components/views/RootView";
 import { TreeView } from "@/components/views/TreeView";
+import { CollaborationsView } from "@/components/views/CollaborationsView";
+import { WorkspaceSync } from "@/components/WorkspaceSync";
 import { useCanvasStore } from "@/store/canvas-store";
 import { useEventStore } from "@/store/event-store";
 import { usePartnerStore } from "@/store/partner-store";
@@ -26,25 +28,28 @@ export function SpatialCanvas() {
   const reduceMotion = useReducedMotion();
   const [databaseAvailable, setDatabaseAvailable] = useState(false);
   const lastView = useRef(view);
+  const lastMotionPreference = useRef(reduceMotion);
+  const [displayedView, setDisplayedView] = useState(view);
   const [rootArrival, setRootArrival] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
-    if (lastView.current === view) return;
+    if (lastView.current === view && lastMotionPreference.current === reduceMotion) return;
     lastView.current = view;
-    if (reduceMotion) {
+    lastMotionPreference.current = reduceMotion;
+    const start = window.setTimeout(() => {
+      setTransitioning(!reduceMotion);
       setRootArrival(false);
-      setTransitioning(false);
-      return;
-    }
-    setTransitioning(true);
-    setRootArrival(view === "root");
-    const transitionTimer = window.setTimeout(() => setTransitioning(false), 1120);
-    const rootTimer = view === "root" ? window.setTimeout(() => setRootArrival(false), 5000) : undefined;
-    return () => {
-      window.clearTimeout(transitionTimer);
-      if (rootTimer) window.clearTimeout(rootTimer);
-    };
+      if (reduceMotion) setDisplayedView(view);
+    }, 0);
+    // Swap the page only when the existing smoke has covered the outgoing screen.
+    const swap = window.setTimeout(() => {
+      setDisplayedView(view);
+      setRootArrival(view === "root");
+    }, reduceMotion ? 0 : 420);
+    const finish = window.setTimeout(() => setTransitioning(false), reduceMotion ? 0 : 1120);
+    const settle = window.setTimeout(() => setRootArrival(false), reduceMotion ? 0 : 5420);
+    return () => { [start, swap, finish, settle].forEach(window.clearTimeout); };
   }, [view, reduceMotion]);
 
   useEffect(() => {
@@ -105,22 +110,25 @@ export function SpatialCanvas() {
 
   return (
     <div data-database={databaseAvailable ? "connected" : "connecting"} className={`canopy-bg relative h-screen w-screen overflow-hidden ${rootArrival ? "canopy-returning-root" : ""}`}>
-      <AnimatePresence mode="wait" initial={false}>
+      <WorkspaceSync />
         <motion.div
-          key={view}
+          key={displayedView}
           className="absolute inset-0 z-[1] will-change-transform"
+          inert={transitioning}
+          aria-busy={transitioning}
           initial={reduceMotion ? false : { opacity: 0, scale: 0.99, filter: "blur(12px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.01, filter: "blur(14px)" }}
           transition={{ duration: reduceMotion ? 0.08 : 0.38, ease: [0.22, 0.68, 0, 1] }}
         >
-          {view === "root" ? <RootView /> : view === "tree" ? <TreeView /> : <BranchesView />}
+          {displayedView === "root" ? <RootView /> : displayedView === "tree" ? <TreeView /> : displayedView === "branches" ? <BranchesView /> : <CollaborationsView />}
         </motion.div>
-      </AnimatePresence>
+
       {transitioning && <motion.div
         key={`transition-${view}`}
         aria-hidden="true"
         className="page-transition-smoke"
+        style={{ pointerEvents: "auto" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 0.98, 0.9, 0] }}
         transition={{ duration: 1.12, times: [0, 0.38, 0.64, 1], ease: "easeInOut" }}

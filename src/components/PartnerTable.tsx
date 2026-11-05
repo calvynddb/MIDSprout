@@ -5,23 +5,40 @@ import { PartnerLogo } from "@/components/PartnerLogo";
 import { cn, LEAF_CUT } from "@/lib/utils";
 import { useCanvasStore } from "@/store/canvas-store";
 import type { Partnership } from "@/types/partnership";
+import { nextPartnerSort, type PartnerSort, type PartnerSortField } from "@/lib/partner-sorting";
 
 export function PartnerTable({
   partners,
   selectedIds,
   onSelectionChange,
   onSelectAll,
+  sort = "name-asc",
+  onSortChange,
   emptyMessage = "No organizations in this branch yet.",
 }: {
   partners: Partnership[];
   selectedIds: string[];
   onSelectionChange: (id: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
+  sort?: PartnerSort;
+  onSortChange?: (sort: PartnerSort) => void;
   emptyMessage?: string;
 }) {
   const openDrawer = useCanvasStore((s) => s.openDrawer);
   const reduceMotion = useReducedMotion();
   const allSelected = partners.length > 0 && partners.every((partner) => selectedIds.includes(partner.id));
+  const sortHeading = (label: string, field: PartnerSortField) => {
+    if (!onSortChange) return <span>{label}</span>;
+    const active = sort.startsWith(`${field}-`);
+    const next = nextPartnerSort(sort, field);
+    return <button type="button" className="inline-flex items-center gap-1 text-left"
+      style={{ minHeight: 0, padding: 0, font: "inherit", letterSpacing: "inherit", textTransform: "inherit", color: "inherit" }}
+      aria-label={`Sort by ${label.toLowerCase()}, ${next.endsWith("-asc") ? "ascending" : "descending"}`}
+      aria-pressed={active} title={`Sort ${label.toLowerCase()} ${next.endsWith("-asc") ? "A–Z" : "Z–A"}`}
+      onClick={() => onSortChange(next)}>
+      {label}{active && <span aria-hidden="true" style={{ fontSize: "inherit" }}>{sort.endsWith("-asc") ? "↑" : "↓"}</span>}
+    </button>;
+  };
 
   return (
     <div className={cn(LEAF_CUT, "glass-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-white/70")}>
@@ -29,7 +46,7 @@ export function PartnerTable({
       <div className="partner-table-inner min-w-[1020px]">
       <div className="partner-table-header grid grid-cols-[34px_minmax(0,1fr)] gap-3 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         <label className="flex items-center justify-center" title="Select all visible organizations"><input aria-label="Select all visible organizations" type="checkbox" checked={allSelected} onChange={(event) => onSelectAll(event.target.checked)} className="h-4 w-4 accent-sky-600" /></label>
-        <div className="partner-table-main grid grid-cols-[58px_minmax(260px,1.7fr)_minmax(170px,1fr)_minmax(190px,1fr)_minmax(220px,1.2fr)] gap-4"><span>Logo</span><span>Organization</span><span>Branch</span><span>Contact person</span><span>Email</span></div>
+        <div className="partner-table-main grid grid-cols-[58px_minmax(260px,1.7fr)_minmax(170px,1fr)_minmax(190px,1fr)_minmax(220px,1.2fr)] gap-4"><span>Logo</span>{sortHeading("Organization", "name")}{sortHeading("Branch", "branch")}{sortHeading("Contact person", "contact")}{sortHeading("Email", "email")}</div>
       </div>
       <AnimatePresence mode="popLayout">
         <div className="partner-table-rows max-h-[calc(100vh-250px)] overflow-y-auto">

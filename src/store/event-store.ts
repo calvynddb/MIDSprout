@@ -16,6 +16,10 @@ interface EventState {
   openCreateEvent: () => void;
   closeEvent: () => void;
   upsertEvent: (event: PartnershipEvent) => void;
+  saveEvent: (event: PartnershipEvent) => Promise<boolean>;
+  archiveEvent: (id: string) => Promise<boolean>;
+  restoreEvent: (id: string) => Promise<boolean>;
+  lastError: string | null;
   replaceRemoteData: (events: PartnershipEvent[], collaborationTypes: string[], committeeOptions: string[]) => void;
   deleteEvent: (id: string) => Promise<boolean>;
   addCollaborationType: (value: string) => void;
@@ -51,11 +55,15 @@ function migrateEvent(event: LegacyEvent): PartnershipEvent {
     location: event.location ?? "",
     description: event.description ?? "",
     status: event.status ?? "planning",
-    participants: (event.participants ?? []).map(({ partnerId }) => ({ partnerId })),
+    participants: (event.participants ?? []).map((item) => ({ ...item, partnerId: item.partnerId })),
+    archivedAt: event.archivedAt ?? null,
+    officerId: event.officerId ?? null,
+    tasks: event.tasks ?? [],
   };
 }
 
 export const useEventStore = create<EventState>()(persist((set) => ({
+  lastError: null,
   events: seed as PartnershipEvent[],
   collaborationTypes: DEFAULT_COLLABORATION_TYPES,
   committeeOptions: DEFAULT_COMMITTEES,
@@ -74,6 +82,17 @@ export const useEventStore = create<EventState>()(persist((set) => ({
     });
     void sendDatabaseMutation({ action: "upsert-collaboration", event });
   },
+  saveEvent: async (event) => {
+    set({ lastError: null });
+    try {
+      const response = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upsert-collaboration", event }) });
+      if (!response.ok) throw new Error((await response.json()).error || "Could not save collaboration.");
+      set((state) => ({ events: state.events.some((item) => item.id === event.id) ? state.events.map((item) => item.id === event.id ? event : item) : [...state.events, event] }));
+      return true;
+    } catch (error) { set({ lastError: error instanceof Error ? error.message : "Could not save collaboration." }); return false; }
+  },
+  archiveEvent: (id) => setCollaborationArchived(id, true),
+  restoreEvent: (id) => setCollaborationArchived(id, false),
   replaceRemoteData: (events, collaborationTypes, committeeOptions) => set({
     events,
     collaborationTypes: [...new Set([...DEFAULT_COLLABORATION_TYPES, ...collaborationTypes, ...events.map((event) => event.collaborationType)])],
@@ -107,3 +126,14 @@ export const useEventStore = create<EventState>()(persist((set) => ({
     return { events, collaborationTypes, committeeOptions };
   },
 }));
+
+async function setCollaborationArchived(id: string, archive: boolean): Promise<boolean> {
+  useEventStore.setState({ lastError: null });
+  try {
+    const response = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: archive ? "archive" : "restore", entity: "collaboration", id }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not update collaboration archive.");
+    useEventStore.setState((state) => ({ events: state.events.map((event) => event.id === id ? { ...event, archivedAt: result.archivedAt } : event) }));
+    return true;
+  } catch (error) { useEventStore.setState({ lastError: error instanceof Error ? error.message : "Could not update collaboration archive." }); return false; }
+}

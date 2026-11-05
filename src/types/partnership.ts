@@ -11,6 +11,7 @@ export const PARTNER_CATEGORIES = [
 export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number];
 
 export interface Partnership {
+  archivedAt?: string | null;
   id: string;
   logoUrl: string;
   acronym: string;
@@ -49,11 +50,16 @@ export type PartnershipEventStatus = "planning" | "confirmed" | "completed" | "c
 
 export interface EventParticipation {
   partnerId: string;
+  status?: "planned" | "invited" | "confirmed" | "declined" | "withdrawn";
+  notes?: string;
   /** Legacy per-organization committees are migrated to the collaboration. */
   committees?: string[];
 }
 
 export interface PartnershipEvent {
+  archivedAt?: string | null;
+  officerId?: string | null;
+  tasks?: CollaborationTask[];
   id: string;
   name: string;
   collaborationType: string;
@@ -68,4 +74,32 @@ export interface PartnershipEvent {
   participants: EventParticipation[];
 }
 
-export type CameraView = "root" | "tree" | "branches";
+export interface CollaborationTask {
+  id: string;
+  title: string;
+  officerId: string | null;
+  dueDate: string;
+  done: boolean;
+}
+
+export interface Officer {
+  id: string;
+  name: string;
+  archivedAt?: string | null;
+  version?: number;
+}
+
+export interface StickyNote {
+  id: string;
+  title: string;
+  body: string;
+  color: "yellow" | "blue" | "pink" | "green";
+  officerId: string | null;
+  x: number;
+  y: number;
+  zIndex: number;
+  archivedAt?: string | null;
+  version?: number;
+}
+
+export type CameraView = "root" | "tree" | "branches" | "collaborations";

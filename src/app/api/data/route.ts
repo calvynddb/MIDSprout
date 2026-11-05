@@ -58,7 +58,7 @@ async function readSnapshot(): Promise<DataSnapshot> {
       ...record,
       id,
       committees: committeesByCollaboration.get(id) ?? record.committees ?? [],
-      participants: (peopleByCollaboration.get(id) ?? record.participants?.map((item) => item.partnerId) ?? []).map((partnerId) => ({ partnerId })),
+      participants: (peopleByCollaboration.get(id) ?? record.participants?.map((item) => item.partnerId) ?? []).map((partnerId) => ({ ...record.participants?.find((item) => item.partnerId === partnerId), partnerId })),
     })),
     collaborationTypes,
     committeeOptions,
@@ -69,7 +69,7 @@ async function readSnapshot(): Promise<DataSnapshot> {
 
 async function savePartner(partner: Partnership) {
   const pool = getDatabasePool();
-  await pool.query("insert into public.organizations(id, record, updated_at) values($1, $2::jsonb, now()) on conflict(id) do update set record=excluded.record, updated_at=now()", [partner.id, JSON.stringify(partner)]);
+  await pool.query("insert into public.organizations(id, record, updated_at) values($1, $2::jsonb, now()) on conflict(id) do update set record=excluded.record || jsonb_build_object('archivedAt', public.organizations.record->'archivedAt'), updated_at=now()", [partner.id, JSON.stringify(partner)]);
 }
 
 async function saveCollaboration(event: PartnershipEvent) {
@@ -77,7 +77,7 @@ async function saveCollaboration(event: PartnershipEvent) {
   const client = await pool.connect();
   try {
     await client.query("begin");
-    await client.query("insert into public.collaborations(id, record, updated_at) values($1, $2::jsonb, now()) on conflict(id) do update set record=excluded.record, updated_at=now()", [event.id, JSON.stringify({ ...event, committees: [], participants: [] })]);
+    await client.query("insert into public.collaborations(id, record, updated_at) values($1, $2::jsonb, now()) on conflict(id) do update set record=excluded.record || jsonb_build_object('archivedAt', public.collaborations.record->'archivedAt'), updated_at=now()", [event.id, JSON.stringify({ ...event, committees: [] })]);
     await client.query("delete from public.collaboration_participants where collaboration_id=$1", [event.id]);
     await client.query("delete from public.collaboration_committees where collaboration_id=$1", [event.id]);
     for (const participant of event.participants ?? []) {
@@ -109,7 +109,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureDatabaseSchema();
-    const body = await request.json() as { action?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
+    const body = await request.json() as { action?: string; entity?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions"> };
+    if ((body.action === "archive" || body.action === "restore") && (body.entity === "organization" || body.entity === "collaboration") && typeof body.id === "string" && body.id) {
+      const table = body.entity === "organization" ? "organizations" : "collaborations";
+      const archivedAt = body.action === "archive" ? new Date().toISOString() : null;
+      const result = await getDatabasePool().query(`update public.${table} set record=jsonb_set(record,'{archivedAt}',$2::jsonb),updated_at=now() where id=$1`, [body.id, JSON.stringify(archivedAt)]);
+      if (!result.rowCount) return NextResponse.json({ error: "Record was not found." }, { status: 404 });
+      return NextResponse.json({ ok: true, archivedAt });
+    }
     if (body.action === "bootstrap" && body.snapshot) {
       const pool = getDatabasePool();
       const client = await pool.connect();

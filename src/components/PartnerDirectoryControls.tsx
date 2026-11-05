@@ -1,17 +1,9 @@
 "use client";
 
 import { ArrowDownUp, Search } from "lucide-react";
-import type { Partnership } from "@/types/partnership";
+import type { PartnerSort } from "@/lib/partner-sorting";
 
-export type PartnerSort = "name-asc" | "name-desc" | "email-asc" | "contact-asc";
-
-export function orderPartners(partners: Partnership[], sort: PartnerSort) {
-  const field = sort === "email-asc" ? "email" : sort === "contact-asc" ? "primaryContact" : "organizationName";
-  return [...partners].sort((left, right) => {
-    const comparison = left[field].localeCompare(right[field], undefined, { sensitivity: "base" });
-    return sort === "name-desc" ? -comparison : comparison;
-  });
-}
+export { orderPartners, type PartnerSort } from "@/lib/partner-sorting";
 
 export function PartnerDirectoryControls({
   query,
@@ -36,7 +28,13 @@ export function PartnerDirectoryControls({
           <option value="name-asc">Name A–Z</option>
           <option value="name-desc">Name Z–A</option>
           <option value="email-asc">Email A–Z</option>
+          <option value="email-desc">Email Z–A</option>
           <option value="contact-asc">Contact A–Z</option>
+          <option value="contact-desc">Contact Z–A</option>
+          <option value="branch-asc">Branch A–Z</option>
+          <option value="branch-desc">Branch Z–A</option>
+          <option value="acronym-asc">Acronym A–Z</option>
+          <option value="acronym-desc">Acronym Z–A</option>
         </select>
       </label>
     </div>
