@@ -10,19 +10,6 @@ import { TreeView } from "@/components/views/TreeView";
 import { CollaborationsView } from "@/components/views/CollaborationsView";
 import { WorkspaceSync } from "@/components/WorkspaceSync";
 import { useCanvasStore } from "@/store/canvas-store";
-import { useEventStore } from "@/store/event-store";
-import { usePartnerStore } from "@/store/partner-store";
-import type { Partnership, PartnershipEvent } from "@/types/partnership";
-
-type RemoteSnapshot = {
-  partners: Partnership[];
-  events: PartnershipEvent[];
-  collaborationTypes: string[];
-  committeeOptions: string[];
-  empty: boolean;
-  revision: string;
-};
-
 const smokeAnimation = { opacity: [0, 0.98, 0.9, 0] };
 
 export function SpatialCanvas() {
@@ -74,65 +61,10 @@ export function SpatialCanvas() {
     return () => { window.clearTimeout(start); };
   }, [view, reduceMotion]);
 
-  useEffect(() => {
-    let cancelled = false;
-    let busy = false;
-    let revision = "";
-
-    const applySnapshot = (snapshot: RemoteSnapshot) => {
-      if (cancelled) return;
-      revision = snapshot.revision;
-      usePartnerStore.getState().replacePartners(snapshot.partners);
-      useEventStore.getState().replaceRemoteData(snapshot.events, snapshot.collaborationTypes, snapshot.committeeOptions);
-      setDatabaseAvailable(true);
-    };
-
-    const refresh = async (bootstrap = false) => {
-      if (busy || cancelled) return;
-      busy = true;
-      try {
-        const response = await fetch("/api/data", { cache: "no-store" });
-        if (!response.ok) throw new Error((await response.json() as { error?: string }).error ?? "Database unavailable.");
-        let snapshot = await response.json() as RemoteSnapshot;
-        if (snapshot.empty && !bootstrap) {
-          const seedResponse = await fetch("/api/data", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "bootstrap",
-              snapshot: {
-                partners: usePartnerStore.getState().partners,
-                events: useEventStore.getState().events,
-                collaborationTypes: useEventStore.getState().collaborationTypes,
-                committeeOptions: useEventStore.getState().committeeOptions,
-              },
-            }),
-          });
-          if (!seedResponse.ok) throw new Error("Could not initialize the shared database.");
-          snapshot = await seedResponse.json() as RemoteSnapshot;
-        }
-        if (!cancelled && (bootstrap || snapshot.revision !== revision)) applySnapshot(snapshot);
-      } catch (error) {
-        if (!cancelled) {
-          setDatabaseAvailable(false);
-          console.error("MIDSprout shared database is unavailable:", error);
-        }
-      } finally {
-        busy = false;
-      }
-    };
-
-    void refresh();
-    const timer = window.setInterval(() => { void refresh(true); }, 5000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, []);
 
   return (
     <div data-database={databaseAvailable ? "connected" : "connecting"} className={`canopy-bg relative h-screen w-screen overflow-hidden ${rootArrival ? "canopy-returning-root" : ""}`}>
-      <WorkspaceSync />
+      <WorkspaceSync onDatabaseAvailable={setDatabaseAvailable} />
         <motion.div
           key={displayedView}
           className="absolute inset-0 z-[1] will-change-transform"
@@ -153,7 +85,7 @@ export function SpatialCanvas() {
         style={{ pointerEvents: "auto" }}
         initial={{ opacity: 0 }}
         animate={smokeAnimation}
-        transition={{ duration: 1.12, times: [0, 0.38, 0.64, 1], ease: "easeInOut" }}
+        transition={{ duration: 1.22, times: [0, 0.35, 0.67, 1], ease: "easeInOut" }}
         onAnimationComplete={() => {
           setTransitioning(false);
           transitionActive.current = false;

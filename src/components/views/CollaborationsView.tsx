@@ -157,7 +157,7 @@ export function CollaborationsView() {
 
         <div data-branch-tone={0} className="file-sheet flex min-h-0 flex-1 flex-col">
           <div className="directory-sheet-heading collaboration-sheet-heading mb-4 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-4">
-            <span className="tile-icon"><FolderOpen size={18} /></span><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-semibold text-slate-800">Collaborations</h3><span className="count-chip">{visible.length} records</span></div><p className="text-sm text-slate-500">Partnerships, committees, and participating organizations.</p></div><div className="ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-label={archived ? "Show active collaborations" : "Show archived collaborations"} title={archived ? "Show active collaborations" : "Show archived collaborations"} aria-pressed={archived} onClick={() => setArchived(!archived)}><Archive size={16} /></LeafButton>
+            <span className="tile-icon"><FolderOpen size={18} /></span><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-lg font-semibold text-slate-800">Collaborations</h3><span className="count-chip">{visible.length} records</span></div><p className="text-sm text-slate-500">Partnerships, committees, and participating organizations.</p></div><div className="collaboration-sheet-actions ml-auto flex flex-wrap items-center justify-end gap-3"><LeafButton variant="outline" aria-label={archived ? "Show active collaborations" : "Show archived collaborations"} title={archived ? "Show active collaborations" : "Show archived collaborations"} aria-pressed={archived} onClick={() => setArchived(!archived)}><Archive size={16} /></LeafButton>
             
             <div className="partner-directory-controls"><label className="directory-search" aria-label="Search collaborations">
               <Search size={17} aria-hidden="true" />
@@ -168,7 +168,7 @@ export function CollaborationsView() {
               />
             </label></div>
 
-            <div className="flex items-center gap-2">
+            <div className="collaboration-filters flex items-center gap-2">
               <label className="directory-sort" aria-label="Collaboration status">
                 <Filter size={15} aria-hidden="true" />
                 <select value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -183,7 +183,7 @@ export function CollaborationsView() {
                 <summary className="mini-action cursor-pointer list-none flex items-center gap-1">
                   <span>Advanced Filters</span>
                 </summary>
-                <div className="absolute left-0 top-full z-20 mt-2 grid w-64 gap-3 rounded-xl border border-sky-200 bg-white p-4 shadow-xl">
+                <div className="collaboration-filter-popover absolute left-0 top-full z-20 mt-2 grid w-64 gap-3 rounded-xl border border-sky-200 bg-white p-4 shadow-xl">
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Type
                     <select className="form-select mt-1" value={type} onChange={(e) => setType(e.target.value)}>
@@ -229,9 +229,9 @@ export function CollaborationsView() {
           {error && <p role="alert" className="mb-3 px-2 text-sm font-medium text-rose-600">{error}</p>}
 
           <div className={cn(LEAF_CUT, "glass-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-white/70")}>
-            <div className="overflow-auto min-h-0 flex-1">
-              <div className="min-w-[1100px]">
-                <div className={`grid ${grid} gap-4 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sticky top-0 z-10`}>
+            <div className="collaboration-table-scroll overflow-auto min-h-0 flex-1">
+              <div className="collaboration-table-inner min-w-[1100px]">
+                <div className={`collaboration-table-header grid ${grid} gap-4 border-b border-sky-200 bg-white/75 px-5 py-4 text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sticky top-0 z-10`}>
                   {columns.map(([field, label]) => (
                     <button
                       key={field}
@@ -242,7 +242,7 @@ export function CollaborationsView() {
                       onClick={() => changeSort(field)}
                     >
                       {label}
-                      {sort.field === field ? (sort.descending ? " ↓" : " ↑") : ""}
+                      {sort.field === field ? (sort.descending ? " ↓" : " ↑") : " ↕"}
                     </button>
                   ))}
                   <span />
@@ -252,11 +252,11 @@ export function CollaborationsView() {
                   {visible.map((event) => (
                     <div 
                       key={event.id} 
-                      className="group relative border-b border-[#cfe6ff] px-5 py-2"
+                      className="collaboration-table-row group relative border-b border-[#cfe6ff] px-5 py-2"
                     >
                       <button
                         type="button"
-                        className={`grid ${grid} w-full items-center gap-4 rounded-lg px-2 py-3 text-left transition hover:bg-sky-50/80`}
+                        className={`collaboration-table-main grid ${grid} w-full items-center gap-4 rounded-lg px-2 py-3 text-left transition hover:bg-sky-50/80`}
                         onClick={() => openEvent(event.id)}
                       >
                         <div className="min-w-0">
@@ -273,28 +273,28 @@ export function CollaborationsView() {
                           </p>
                         </div>
 
-                        <div className="text-sm text-slate-600 collaboration-detail">
+                        <div data-label="Dates" className="text-sm text-slate-600 collaboration-detail">
                           {event.startDate || "Date TBD"}
                           {event.endDate && event.endDate !== event.startDate && (
                             <span className="block text-xs text-slate-400">to {event.endDate}</span>
                           )}
                         </div>
 
-                        <div>
+                        <div data-label="Status">
                           <span className={cn("status-chip inline-flex", `status-${event.status}`)}>
                             {event.status}
                           </span>
                         </div>
 
-                        <div className="text-sm text-slate-600 truncate collaboration-detail">
+                        <div data-label="Officer" className="text-sm text-slate-600 truncate collaboration-detail">
                           {nameOf(event.officerId) || <span className="text-slate-500">Unassigned</span>}
                         </div>
 
-                        <div className="text-sm font-medium text-slate-700 text-center">
+                        <div data-label="Organizations" className="text-sm font-medium text-slate-700 text-center">
                           {event.participants.length}
                         </div>
 
-                        <div>
+                        <div data-label="Tasks">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-slate-700">
                               {event.tasks?.filter((t) => t.done).length ?? 0}/{event.tasks?.length ?? 0}
@@ -312,7 +312,7 @@ export function CollaborationsView() {
                       </button>
 
                       {/* Action button overlay for the last cell */}
-                      <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                      <div className="collaboration-row-actions absolute right-5 top-1/2 -translate-y-1/2 flex items-center justify-center">
                         <button
                           type="button"
                           className="p-2 text-sky-700 hover:bg-white hover:shadow-sm rounded-lg transition-all disabled:opacity-30"

@@ -1,7 +1,8 @@
 import { ensureWorkspaceSchema, readWorkspace, writeWorkspace } from "@/lib/workspace-data";
 import { WorkspaceError } from "@/lib/workspace-validation";
 import { NextResponse } from "next/server";
-import { ensureDatabaseSchema, getDatabasePool } from "@/lib/database";
+import { getDatabasePool } from "@/lib/database";
+import { ensureDataSchema } from "@/lib/database-schema";
 import type { Partnership, PartnershipEvent, StickyNote, Officer } from "@/types/partnership";
 
 export const runtime = "nodejs";
@@ -99,9 +100,10 @@ async function saveCollaboration(event: PartnershipEvent) {
 
 export async function GET() {
   try {
-    await ensureDatabaseSchema();
+    await ensureDataSchema();
     await ensureWorkspaceSchema();
-    return NextResponse.json({ ...await readSnapshot(), ...await readWorkspace() }, { headers: { "Cache-Control": "no-store" } });
+    const [directory, workspace] = await Promise.all([readSnapshot(), readWorkspace()]);
+    return NextResponse.json({ ...directory, ...workspace }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const diagnostic = getDatabaseDiagnostic(error);
     console.error("MIDSprout database read failed:", diagnostic.code);
@@ -111,7 +113,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabaseSchema();
+    await ensureDataSchema();
     const body = await request.json() as { action?: string; entity?: string; id?: string; ids?: string[]; partner?: Partnership; event?: PartnershipEvent; kind?: string; value?: string; snapshot?: Pick<DataSnapshot, "partners" | "events" | "collaborationTypes" | "committeeOptions">; note?: StickyNote; officer?: Officer; };
     if (body.action === "upsert-note" || body.action === "upsert-officer" ||
       ((body.action === "archive" || body.action === "restore") && (body.kind === "note" || body.kind === "officer"))) {

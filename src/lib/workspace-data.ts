@@ -1,8 +1,9 @@
 import { getDatabasePool } from "@/lib/database";
+import { onceSuccessful } from "./once-successful";
 import type { Officer, StickyNote } from "@/types/partnership";
 import { expectedVersion, nextWorkspaceRecord, workspaceId, workspaceRecord, WorkspaceError, type WorkspaceKind, type WorkspaceSnapshot } from "./workspace-validation";
 
-export async function ensureWorkspaceSchema() {
+export const ensureWorkspaceSchema = onceSuccessful(async () => {
   await getDatabasePool().query(`
     create table if not exists public.workspace_items (
       kind text not null check (kind in ('note','officer')),
@@ -13,7 +14,7 @@ export async function ensureWorkspaceSchema() {
     );
     alter table public.workspace_items enable row level security;
   `);
-}
+});
 
 export async function readWorkspace(): Promise<WorkspaceSnapshot> {
   try {
